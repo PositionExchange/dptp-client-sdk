@@ -1,0 +1,39 @@
+# General
+*.log
+*.swp
+*.swo
+.DS_Store
+*.bak
+*.tmp
+
+# Rust
+/target
+**/target
+**/*.rs.bk
+Cargo.lock
+
+# WebAssembly
+wasm/pkg/
+wasm/target/
+
+# Flutter and Dart
+flutter/.packages
+flutter/.flutter-plugins
+flutter/.pub/
+flutter/.pub-cache/
+flutter/build/
+flutter/ios/Pods/
+flutter/ios/Runner.xcworkspace/xcuserdata/
+flutter/ios/Runner.xcworkspace/xcshareddata/
+flutter/ios/Runner.xcodeproj/xcuserdata/
+flutter/ios/Runner.xcodeproj/project.xcworkspace/
+flutter/ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/
+flutter/ios/Runner.xcodeproj/xcshareddata/
+*.jks
+*.keystore
+/keys.properties
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
