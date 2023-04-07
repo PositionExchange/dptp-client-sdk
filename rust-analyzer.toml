@@ -1,0 +1,2 @@
+[dianostics]
+disabled = ["deadcode", "unreachable_code"]
