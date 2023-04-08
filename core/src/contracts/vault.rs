@@ -1,6 +1,9 @@
+use std::{ops::Div, str::FromStr};
+
 use ethers::{
     types::{Address, Bytes, U256},
 };
+use rust_decimal::Decimal;
 
 use crate::config::Chain;
 
@@ -41,6 +44,40 @@ impl Vault {
         }
         Ok(())
     }
+
+    pub async fn fetch_token_prices(&self, tokens: &mut Vec<Token>) -> anyhow::Result<()> {
+        // fetch ask price
+        let fetch_ask_price_calls: Vec<(Address, Bytes)> = tokens.iter().map(|token| {
+            let (vault_addr, data) = token.build_get_ask_price_call(&self.vault_addr);
+            (vault_addr, data)
+        }).collect();
+        // fetch bid price
+        let fetch_bid_price_calls: Vec<(Address, Bytes)> = tokens.iter().map(|token| {
+            let (vault_addr, data) = token.build_get_bid_price_call(&self.vault_addr);
+            (vault_addr, data)
+        }).collect();
+        let call_len = fetch_ask_price_calls.len();
+        let mut merged_calls = fetch_bid_price_calls.clone();
+        merged_calls.extend(fetch_ask_price_calls);
+        let results = self.chain.execute_multicall(merged_calls, include_str!("../../abi/vault.json").to_string(), "getAskPrice").await.expect("[Vault] Failed to fetch ask prices");
+        let chunk_reulsts = results.chunks(call_len);
+        let ask_prices = chunk_reulsts.clone().next().expect("Failed to get ask prices")
+            .into_iter().map(_format_price).collect::<Vec<_>>();
+        let bid_prices = chunk_reulsts.clone().next().expect("Failed to get bid prices")
+            .into_iter().map(_format_price).collect::<Vec<_>>();
+        for (token, ask_price) in tokens.iter_mut().zip(ask_prices) {
+            token.ask_price = Some(ask_price);
+        }
+        for (token, bid_price) in tokens.iter_mut().zip(bid_prices) {
+            token.bid_price = Some(bid_price);
+        }
+        
+        Ok(())
+    }
+}
+
+fn _format_price(x: &Vec<ethabi::Token>) -> Decimal {
+    return Decimal::from_str(&ethers::utils::format_units(x[0].clone().into_uint().expect("Failed to parse ask price"), 30).expect("failed to convert u256 to decimal")).expect("failed to convert price to decimal");
 }
 
 
@@ -49,38 +86,8 @@ mod tests {
     use super::*;
     fn create_tokens() -> Vec<Token> {
         let mut tokens = vec![
-            Token {
-                    chain_id: Some(97),
-                    address: "0x542E4676238562b518B968a1d03626d544a7BCA2".to_string(),
-                    name: "USDT".to_string(),
-                    symbol: "USDT".to_string(),
-                    decimals: 18,
-                    token_weight: None,
-                    is_whitelisted: None,
-                    is_stable_token: None,
-                    is_shortable_token: None,
-                    min_profit_basis_points: None,
-                    max_usdp_amount: None,
-                    is_native_token: None,
-                    allowances: None,
-                    balances: None,
-                },
-            Token {
-                    chain_id: Some(97),
-                    address: "0xc4900937c3222CA28Cd4b300Eb2575ee0868540F".to_string(),
-                    name: "BTC".to_string(),
-                    symbol: "BTC".to_string(),
-                    decimals: 18,
-                    token_weight: None,
-                    is_whitelisted: None,
-                    is_stable_token: None,
-                    is_shortable_token: None,
-                    min_profit_basis_points: None,
-                    max_usdp_amount: None,
-                    is_native_token: None,
-                    allowances: None,
-                    balances: None,
-                },
+            Token::new(97, "0x542E4676238562b518B968a1d03626d544a7BCA2", "USDT", "USDT", 18),
+            Token::new(97, "0xc4900937c3222CA28Cd4b300Eb2575ee0868540F", "BTC", "BTC", 18),
         ];
         tokens
     }
@@ -103,5 +110,27 @@ mod tests {
         assert_eq!(tokens[0].is_stable_token, Some(true));
         assert_eq!(tokens[1].token_weight, Some(100));
         assert_eq!(tokens[1].is_stable_token, Some(false));
+    }
+
+    #[tokio::test]
+    async fn test_fetch_token_prices() {
+        let vault = Vault {
+            vault_addr: "0xF55Fc8e91c0c893568dB750cD4a4eB2D953E80a5".to_string(),
+            chain: Chain {
+                chain_id: 97,
+                rpc_urls: vec!["https://data-seed-prebsc-1-s1.binance.org:8545/".to_string()],
+                multicall_address: "0x6e5bb1a5ad6f68a8d7d6a5e47750ec15773d6042".to_string(),
+            }
+        };
+
+        let mut tokens = create_tokens();
+        let result = vault.fetch_token_prices(&mut tokens).await;
+        assert!(result.is_ok());
+
+        // verify token prices that > 0
+        assert!(tokens[0].ask_price.unwrap().gt(&rust_decimal::Decimal::from(0)));
+        assert!(tokens[1].ask_price.unwrap().gt(&rust_decimal::Decimal::from(0)));
+        assert!(tokens[0].bid_price.unwrap().gt(&rust_decimal::Decimal::from(0)));
+        assert!(tokens[1].bid_price.unwrap().gt(&rust_decimal::Decimal::from(0)));
     }
 }
