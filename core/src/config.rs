@@ -3,12 +3,15 @@ use std::{fs, env};
 use std::path::PathBuf;
 use crate::contracts::token::Token;
 use crate::contracts::multicall::Multicall;
+use crate::contracts::global_fetch::GlobalFetch;
+
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Config {
     pub selected_account: Option<String>,
     pub chain: Chain,
     pub tokens: Vec<Token>,
+    pub contract_address: ContractAddress
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -16,6 +19,11 @@ pub struct Chain {
     pub chain_id: u64,
     pub rpc_urls: Vec<String>,
     pub multicall_address: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct ContractAddress {
+    pub vault: String,
 }
 
 impl Config {

@@ -3,6 +3,9 @@ chain_id = 97
 rpc_urls = ["https://data-seed-prebsc-1-s1.binance.org:8545/"]
 multicall_address = "0x6e5bb1a5ad6f68a8d7d6a5e47750ec15773d6042"
 
+[contract_address]
+vault="0xF55Fc8e91c0c893568dB750cD4a4eB2D953E80a5"
+
 
 [[tokens]]
 chain_id = 97

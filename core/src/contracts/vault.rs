@@ -4,6 +4,7 @@ use ethers::{
     types::{Address, Bytes, U256},
 };
 use rust_decimal::Decimal;
+use tokio::sync::Mutex;
 
 use crate::config::Chain;
 
@@ -18,7 +19,11 @@ pub struct Vault {
 }
 
 impl Vault {
-    pub async fn fetch_token_configuration(&self, tokens: &mut Vec<Token>) -> anyhow::Result<()> {
+    pub fn new(vault_addr: &String, chain: &Chain) -> Self {
+        Self { vault_addr: vault_addr.to_string(), chain: chain.clone() }
+    }
+    pub async fn fetch_token_configuration(&self, tokens: &Mutex<Vec<Token>>) -> anyhow::Result<()> {
+         let mut tokens = tokens.lock().await;
         let calls: Vec<(Address, Bytes)> = tokens.iter().map(|token| {
             let (vault_addr, data) = token.build_get_vault_token_configuration_call(&self.vault_addr);
             (vault_addr, data)
@@ -45,7 +50,8 @@ impl Vault {
         Ok(())
     }
 
-    pub async fn fetch_token_prices(&self, tokens: &mut Vec<Token>) -> anyhow::Result<()> {
+    pub async fn fetch_token_prices(&self, tokens: &Mutex<Vec<Token>>) -> anyhow::Result<()> {
+        let mut tokens = tokens.lock().await;
         // fetch ask price
         let fetch_ask_price_calls: Vec<(Address, Bytes)> = tokens.iter().map(|token| {
             let (vault_addr, data) = token.build_get_ask_price_call(&self.vault_addr);
@@ -102,9 +108,10 @@ mod tests {
                 multicall_address: "0x6e5bb1a5ad6f68a8d7d6a5e47750ec15773d6042".to_string(),
             }
         };
-        let mut tokens = create_tokens();
-        let result = vault.fetch_token_configuration(&mut tokens).await;
+        let tokens = Mutex::new(create_tokens());
+        let result = vault.fetch_token_configuration(&tokens).await;
         assert!(result.is_ok());
+        let tokens = tokens.lock().await;
         // verify tokens is modified
         assert_eq!(tokens[0].token_weight, Some(100));
         assert_eq!(tokens[0].is_stable_token, Some(true));
@@ -123,9 +130,10 @@ mod tests {
             }
         };
 
-        let mut tokens = create_tokens();
-        let result = vault.fetch_token_prices(&mut tokens).await;
+        let mut tokens = Mutex::new(create_tokens());
+        let result = vault.fetch_token_prices(&tokens).await;
         assert!(result.is_ok());
+        let tokens = tokens.lock().await;
 
         // verify token prices that > 0
         assert!(tokens[0].ask_price.unwrap().gt(&rust_decimal::Decimal::from(0)));

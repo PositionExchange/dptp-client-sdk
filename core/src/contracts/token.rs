@@ -19,6 +19,7 @@ pub struct Token {
     pub is_shortable_token: Option<bool>,
     pub min_profit_basis_points: Option<u64>,
     pub max_usdp_amount: Option<U256>,
+
     pub is_native_token: Option<bool>,
 
     // prices
@@ -26,7 +27,7 @@ pub struct Token {
     pub bid_price: Option<Decimal>,
 
     pub allowances: Option<HashMap<Address, U256>>,
-    pub balances: Option<HashMap<Address, U256>>,
+    pub balances: Option<HashMap<Address, Decimal>>,
 }
 
 impl Token {
@@ -53,8 +54,8 @@ impl Token {
         }
     }
     pub fn build_balance_of_call(&self, account: &String) -> (Address, Bytes) {
-        let address: Address = account.parse().unwrap();
-        let token: Address = self.address.parse().unwrap();
+        let address: Address = account.parse().expect("Invalid account");
+        let token: Address = self.address.parse().expect("Invalid token address");
         let function_name = "balanceOf";
         let erc20_abi = include_str!("../../abi/erc20.json");
         let contract = Contract::load(erc20_abi.as_bytes()).unwrap();
@@ -63,8 +64,8 @@ impl Token {
     }
 
     pub fn build_allowance_of_call(&self, account: &String) -> (Address, Bytes) {
-        let address: Address = account.parse().unwrap();
-        let token: Address = self.address.parse().unwrap();
+        let address: Address = account.parse().expect("Invalid account");
+        let token: Address = self.address.parse().expect("Invalid token address");
         let function_name = "allowance";
         let erc20_abi = include_str!("../../abi/erc20.json");
         let contract = Contract::load(erc20_abi.as_bytes()).unwrap();
@@ -122,7 +123,13 @@ impl Token {
         if self.balances.is_none() {
             self.balances = Some(HashMap::new());
         }
-        self.balances.as_mut().unwrap().insert(addr, balance);
+        // TODO use self decimals instead of hardcoding 18
+        let b = ethers::utils::format_units(balance, self.decimals as u32).expect("faill parse units");
+        let dec_balance = Decimal::from_str(
+            &b.to_string()
+        ).expect("convert to decimal");
+        println!("dec balance {:?}", dec_balance);
+        self.balances.as_mut().unwrap().insert(addr, dec_balance);
     }
 
     pub fn update_allowance(&mut self, account: &String, allowance: U256) {
@@ -140,8 +147,7 @@ impl Token {
             .unwrap_or_else(|| HashMap::new());
         let balance = binding
             .get(&addr);
-        let zero = U256::from(0);
-        return balance.unwrap_or_else(|| &zero).to_string();
+        return balance.unwrap_or_else(|| &Decimal::ZERO).to_string();
     }
     pub fn get_allowance(&self, account: &String) -> String {
         let addr: Address = account.parse().unwrap();
@@ -241,13 +247,13 @@ mod tests {
         let user1 = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984".to_string();
         let user2 = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f985".to_string();
         let user3 = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f986".to_string();
-        token.update_balance(&user1, U256::from(1000));
-        assert_eq!(token.get_balance(&user1), "1000");
+        token.update_balance(&user1, ethers::utils::parse_ether(1000).unwrap());
+        assert_eq!(token.get_balance(&user1).parse::<f64>().unwrap(), 1000.0);
         // for multiple users shouild work
-        token.update_balance(&user2, U256::from(2000));
-        assert_eq!(token.get_balance(&user1), "1000");
-        assert_eq!(token.get_balance(&user2), "2000");
-        assert_eq!(token.get_balance(&user3), "0");
+        token.update_balance(&user2, ethers::utils::parse_ether(2000).unwrap());
+        assert_eq!(token.get_balance(&user1).parse::<f64>().unwrap(), 1000.0);
+        assert_eq!(token.get_balance(&user2).parse::<f64>().unwrap(), 2000.0);
+        assert_eq!(token.get_balance(&user3).parse::<f64>().unwrap(), 0.0);
     }
 
     #[test]
