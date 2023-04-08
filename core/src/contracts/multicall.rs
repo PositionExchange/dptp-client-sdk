@@ -24,9 +24,9 @@ pub trait ChainMulticallTrait {
 #[async_trait]
 impl ChainMulticallTrait for Chain {
     async fn execute_multicall(&self, calls: Vec<(Address, Bytes)>, interface: String, fn_name: &str) -> Result<Vec<Vec<ethabi::Token>>, String>{
-        let provider = Provider::<Http>::try_from(self.rpc_urls[0].clone()).unwrap();
+        let provider = Provider::<Http>::try_from(self.rpc_urls[0].clone()).expect("invalid rpc url, check your config");
         let client = Arc::new(provider.clone());
-        let address: Address = self.multicall_address.parse().unwrap();
+        let address: Address = self.multicall_address.parse().expect("invalid multicall address, check your config");
         let multicall = Multicall::new(address, client);
         let (_block_number, return_data) = multicall.aggregate(calls).call().await.expect("failed to execute multicall");
         // convert return data to type

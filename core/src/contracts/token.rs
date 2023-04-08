@@ -79,7 +79,7 @@ impl Token {
         self.max_usdp_amount = Some(max_usdp_amount);
     }
 
-    pub fn update_balance(&mut self, account: String, balance: U256) {
+    pub fn update_balance(&mut self, account: &String, balance: U256) {
         let addr: Address = account.parse().unwrap();
         if self.balances.is_none() {
             self.balances = Some(HashMap::new());
@@ -87,7 +87,7 @@ impl Token {
         self.balances.as_mut().unwrap().insert(addr, balance);
     }
 
-    pub fn update_allowance(&mut self, account: String, allowance: U256) {
+    pub fn update_allowance(&mut self, account: &String, allowance: U256) {
         let addr: Address = account.parse().unwrap();
         if self.allowances.is_none() {
             self.allowances = Some(HashMap::new());
@@ -102,7 +102,8 @@ impl Token {
             .unwrap_or_else(|| HashMap::new());
         let balance = binding
             .get(&addr);
-        return balance.unwrap().to_string();
+        let zero = U256::from(0);
+        return balance.unwrap_or_else(|| &zero).to_string();
     }
     pub fn get_allowance(&self, account: &String) -> String {
         let addr: Address = account.parse().unwrap();
@@ -111,7 +112,8 @@ impl Token {
             .unwrap_or_else(|| HashMap::new());
         let val = binding
             .get(&addr);
-        return val.unwrap().to_string();
+        let zero = U256::from(0);
+        return val.unwrap_or_else(|| &&zero).to_string();
     }
 
     pub fn get_token_ratio(&self, total_weight: &u64) -> Decimal {
@@ -199,12 +201,14 @@ mod tests {
         let mut token = create_mock_token();
         let user1 = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984".to_string();
         let user2 = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f985".to_string();
-        token.update_balance(user1.clone(), U256::from(1000));
+        let user3 = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f986".to_string();
+        token.update_balance(&user1, U256::from(1000));
         assert_eq!(token.get_balance(&user1), "1000");
         // for multiple users shouild work
-        token.update_balance(user2.clone(), U256::from(2000));
+        token.update_balance(&user2, U256::from(2000));
         assert_eq!(token.get_balance(&user1), "1000");
         assert_eq!(token.get_balance(&user2), "2000");
+        assert_eq!(token.get_balance(&user3), "0");
     }
 
     #[test]
@@ -212,11 +216,15 @@ mod tests {
         let mut token = create_mock_token();
         let user1 = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984".to_string();
         let user2 = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f985".to_string();
-        token.update_allowance(user1.clone(), U256::from(1000));
+        let user3 = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f986".to_string();
+        token.update_allowance(&user1, U256::from(1000));
         assert_eq!(token.get_allowance(&user1), "1000");
-        token.update_allowance(user2.clone(), U256::from(5000));
+        token.update_allowance(&user2, U256::from(5000));
         assert_eq!(token.get_allowance(&user1), "1000");
         assert_eq!(token.get_allowance(&user2), "5000");
+        token.update_allowance(&user2, U256::from(6000));
+        assert_eq!(token.get_allowance(&user2), "6000");
+        assert_eq!(token.get_allowance(&user3), "0");
     }
 
     #[test]

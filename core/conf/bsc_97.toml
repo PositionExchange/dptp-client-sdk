@@ -1,22 +1,22 @@
 [chain]
 chain_id = 97
 rpc_urls = ["https://data-seed-prebsc-1-s1.binance.org:8545/"]
-multicall_address = ""
+multicall_address = "0x6e5bb1a5ad6f68a8d7d6a5e47750ec15773d6042"
 
 
 [[tokens]]
 chain_id = 97
-address = "0x0d8775f648430679a709e98d2b0cb6250d2887ef"
-symbol = "Test"
+address = "0x542E4676238562b518B968a1d03626d544a7BCA2"
+symbol = "USDT"
 decimals = 18
-name = "Test"
+name = "USDT"
 is_whitlisted = true
 
 [[tokens]]
 chain_id = 97
-address = "0x0d8775f648430679a709e98d2b0cb6250d2887ef"
-symbol = "Test2"
+address = "0xc4900937c3222CA28Cd4b300Eb2575ee0868540F"
+symbol = "BTC"
 decimals = 18
-name = "Test 2"
+name = "BTC"
 is_whitelisted = true
 
