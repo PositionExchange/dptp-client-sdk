@@ -14,7 +14,7 @@ pub struct Config {
     pub contract_address: ContractAddress
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct Chain {
     pub chain_id: u64,
     pub rpc_urls: Vec<String>,

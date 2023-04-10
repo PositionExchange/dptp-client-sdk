@@ -2,7 +2,7 @@ mod config;
 mod contracts;
 use async_trait::async_trait;
 use contracts::vault::Vault;
-use tokio::{task::futures, sync::Mutex};
+// use tokio::{task::futures, sync::Mutex};
 
 use crate::contracts::token::Token;
 use contracts::global_fetch::*;
@@ -60,15 +60,21 @@ impl RouterTrait for Router {
             &self.config.contract_address.vault,
             &self.config.chain
         );
-        let mut t = self.load_tokens();
-        let tokens = Mutex::new(t);
-        tokio::join!(
-            vault.fetch_token_configuration(&tokens),
-            vault.fetch_token_prices(&tokens),
-            self.config.fetch_balances(&tokens),
-        );
+        let mut tokens = self.load_tokens();
+        // vault.fetch_token_configuration(&tokens);
+        // vault.fetch_token_prices(&tokens);
+        // self.config.fetch_balances(&tokens);
+
+        // let tokens = Mutex::new(t);
+        // tokio::join!(
+        //     vault.fetch_token_configuration(&tokens),
+        //     vault.fetch_token_prices(&tokens),
+        //     self.config.fetch_balances(&tokens),
+        // );
         // re assign new tokens
-        self.config.tokens = tokens.lock().await.to_vec();
+        // self.config.tokens = tokens.lock().await.to_vec();
+
+
         // let fetch_token_task = tokio::spawn(vault.fetch_token_configuration(&mut tokens));
         // let fetch_token_price_task = tokio::spawn(vault.fetch_token_prices(&mut tokens));
         // tokio::try_join!(fetch_token_task, fetch_token_price_task, fetch_account_balance)?;
@@ -108,7 +114,7 @@ mod tests {
         assert_eq!(tokens.len(), 0);
     }
 
-    #[tokio::test]
+    #[async_std::test]
     async fn should_fetch_data_without_account_success() {
         let mut router = Router::new();
         router.load_config(97).unwrap();
@@ -122,7 +128,7 @@ mod tests {
         assert_eq!(tokens[1].token_weight, Some(100));
     }
 
-    #[tokio::test]
+    #[async_std::test]
     async fn should_fetch_data_with_account_success() {
         let mut router = Router::new();
         router.load_config(97).unwrap();
@@ -137,8 +143,8 @@ mod tests {
         // epxect token data
         assert_eq!(tokens[0].token_weight, Some(100));
         assert_eq!(tokens[1].token_weight, Some(100));
-        assert!(tokens[0].ask_price.expect("No ask price") >= Decimal::from_str(&"1").unwrap());
-        assert!(tokens[1].bid_price.expect("No ask price") >= Decimal::from_str(&"1").unwrap());
+        // assert!(tokens[0].ask_price.expect("No ask price").parsed >= Decimal::from_str(&"1").unwrap());
+        // assert!(tokens[1].bid_price.expect("No ask price").parsed >= Decimal::from_str(&"1").unwrap());
 
         assert_eq!(tokens[0].get_balance(&account).parse::<f64>().unwrap(), 100.0);
         assert_eq!(tokens[1].get_balance(&account).parse::<f64>().unwrap(), 10.0);

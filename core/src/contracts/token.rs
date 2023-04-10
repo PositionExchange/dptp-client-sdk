@@ -5,6 +5,26 @@ use std::str::FromStr;
 use serde::Deserialize;
 use rust_decimal::prelude::Decimal;
 
+const PRICE_DECIMALS: u32 = 30;
+
+#[derive(Debug, Deserialize, Clone, Default, PartialEq, PartialOrd)]
+pub struct Price {
+    pub raw: U256,
+    pub parsed: Decimal
+}
+
+impl Price {
+    pub fn new_from_eth_token(raw: &ethabi::Token) -> Self {
+        let u256_price = raw.clone().into_uint().expect("Failed to parse price");
+        let parsed_price = Decimal::from_str(&ethers::utils::format_units(u256_price, PRICE_DECIMALS).expect("failed to pare ether units")).unwrap();
+        Price { raw: u256_price, parsed: parsed_price }
+    }
+    pub fn is_zero(&self) -> bool {
+        self.raw.is_zero()
+    }
+}
+
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct Token {
     pub chain_id: Option<u64>,
@@ -23,14 +43,17 @@ pub struct Token {
     pub is_native_token: Option<bool>,
 
     // prices
-    pub ask_price: Option<Decimal>,
-    pub bid_price: Option<Decimal>,
+    pub ask_price: Option<Price>,
+    pub bid_price: Option<Price>,
+    pub min_price: Option<Price>,
 
     pub buy_plp_fees: Option<Decimal>,
     pub sell_plp_fees: Option<Decimal>,
 
     pub total_liquidity: Option<Decimal>,
     pub available_liquidity: Option<Decimal>,
+    pub usdp_amount: Option<U256>,
+    
 
     pub allowances: Option<HashMap<Address, U256>>,
     pub balances: Option<HashMap<Address, Decimal>>,
@@ -54,6 +77,7 @@ impl Token {
 
             ask_price: None,
             bid_price: None,
+            min_price: None,
 
             allowances: None,
             balances: None,
@@ -61,6 +85,7 @@ impl Token {
             sell_plp_fees: None,
             total_liquidity: None,
             available_liquidity: None,
+            usdp_amount: None
         }
     }
     pub fn build_balance_of_call(&self, account: &String) -> (Address, Bytes) {

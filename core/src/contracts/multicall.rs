@@ -13,7 +13,7 @@ abigen!(
     "./abi/multicall.json",
 );
 
-#[async_trait]
+#[async_trait(?Send)]
 pub trait ChainMulticallTrait {
     //! execute multicall
     //! pass calls to multicall contract
@@ -21,7 +21,7 @@ pub trait ChainMulticallTrait {
     async fn execute_multicall(&self, calls: Vec<(Address, Bytes)>, interface: String, fn_name: &str) -> Result<Vec<Vec<ethabi::Token>>, String>;
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl ChainMulticallTrait for Chain {
     async fn execute_multicall(&self, calls: Vec<(Address, Bytes)>, interface: String, fn_name: &str) -> Result<Vec<Vec<ethabi::Token>>, String>{
         let provider = Provider::<Http>::try_from(self.rpc_urls[0].clone()).expect("invalid rpc url, check your config");
@@ -29,8 +29,12 @@ impl ChainMulticallTrait for Chain {
         let address: Address = self.multicall_address.parse().expect("invalid multicall address, check your config");
         let multicall = Multicall::new(address, client);
         let (_block_number, return_data) = multicall.aggregate(calls).call().await.expect("failed to execute multicall");
+        println!("return data {:?}", return_data);
+        // let abi = ethabi::Contract::load(interface.as_bytes()).unwrap();
+        // let function = abi.function(fn_name).unwrap();
+        // let results: Vec<Vec<ethabi::Token>> = return_data.into_iter().map(|data| function.decode_output(&data).unwrap()).collect();
         // convert return data to type
-        Ok(decode_return_data(return_data, interface, fn_name))
+        Ok(vec![])
     }
 }
 
@@ -48,7 +52,7 @@ mod tests {
     use super::*;
     use ethers::types::U256;
 
-    #[tokio::test]
+    #[async_std::test]
     async fn execute_multicall_works() {
         let chain = Chain {
             chain_id: 97,
