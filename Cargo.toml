@@ -4,3 +4,4 @@ members = [
     # "flutter",
     "wasm"
 ]
+resolver = "2"
