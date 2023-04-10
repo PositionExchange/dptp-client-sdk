@@ -2,12 +2,12 @@ use std::collections::HashMap;
 use ethers::{types::Bytes};
 use ethabi::{ethereum_types::Address, ethereum_types::U256, Contract};
 use std::str::FromStr;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use rust_decimal::prelude::Decimal;
 
 const PRICE_DECIMALS: u32 = 30;
 
-#[derive(Debug, Deserialize, Clone, Default, PartialEq, PartialOrd)]
+#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq, PartialOrd)]
 pub struct Price {
     pub raw: U256,
     pub parsed: Decimal
@@ -25,7 +25,7 @@ impl Price {
 }
 
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Token {
     pub chain_id: Option<u64>,
     pub address: String,

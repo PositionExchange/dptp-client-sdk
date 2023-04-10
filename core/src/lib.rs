@@ -1,4 +1,4 @@
-mod config;
+pub mod config;
 mod contracts;
 use async_trait::async_trait;
 use contracts::vault::Vault;
