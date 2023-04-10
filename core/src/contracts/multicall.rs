@@ -34,7 +34,7 @@ impl ChainMulticallTrait for Chain {
         // let function = abi.function(fn_name).unwrap();
         // let results: Vec<Vec<ethabi::Token>> = return_data.into_iter().map(|data| function.decode_output(&data).unwrap()).collect();
         // convert return data to type
-        Ok(vec![])
+        Ok(decode_return_data(return_data, interface, fn_name))
     }
 }
 
@@ -52,7 +52,7 @@ mod tests {
     use super::*;
     use ethers::types::U256;
 
-    #[async_std::test]
+    #[tokio::test]
     async fn execute_multicall_works() {
         let chain = Chain {
             chain_id: 97,

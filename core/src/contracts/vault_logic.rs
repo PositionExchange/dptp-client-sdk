@@ -11,7 +11,6 @@ lazy_static! {
     static ref BASIS_POINTS_DIVISOR: U256 = U256::from(0);
 }
 
-
 pub trait VaultLogic {
     fn get_fee_basis_points(
         &self,
@@ -24,6 +23,7 @@ pub trait VaultLogic {
         usdg_supply: &U256,
         total_token_weights: &U256,
     ) -> u32;
+
     
 }
 

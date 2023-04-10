@@ -2,7 +2,9 @@ pub mod config;
 mod contracts;
 use async_trait::async_trait;
 use contracts::vault::Vault;
-// use tokio::{task::futures, sync::Mutex};
+// use futures::try_join;
+use std::sync::{Arc, Mutex};
+// use tokio::{task::futures};
 
 use crate::contracts::token::Token;
 use contracts::global_fetch::*;
@@ -13,7 +15,7 @@ pub struct Router {
     pub config: config::Config,
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 pub trait RouterTrait {
     fn new() -> Self;
     fn load_config(&mut self, chain_id: u64) -> Result<&config::Config, &'static str>;
@@ -23,7 +25,7 @@ pub trait RouterTrait {
     async fn fetch_data(&mut self) -> anyhow::Result<()>;
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl RouterTrait for Router {
     fn new() -> Self {
         Self {
@@ -47,10 +49,33 @@ impl RouterTrait for Router {
             &self.config.contract_address.vault,
             &self.config.chain
         );
-        let mut tokens = self.load_tokens();
-        // vault.fetch_token_configuration(&tokens);
-        // vault.fetch_token_prices(&tokens);
-        // self.config.fetch_balances(&tokens);
+        let tokens = self.load_tokens();
+        let tokens = tokio::sync::Mutex::new(tokens);
+        // let tokens1 = Arc::clone(&tokens);
+        // let tokens2 = Arc::clone(&tokens);
+
+        // TODO move the lock to the function??
+        let _tasks = tokio::join![
+            async {
+                println!("task 1 start");
+                let mut tokens = tokens.lock().await;
+                vault.fetch_token_configuration(&mut tokens).await;
+                println!("task 1 done");
+            },
+            async {
+                println!("task 2 start");
+                let mut tokens = tokens.lock().await;
+                vault.fetch_token_prices(&mut tokens).await;
+                println!("task 2 done");
+            },
+            async {
+                println!("task 3 start");
+                let mut tokens = tokens.lock().await;
+                self.config.fetch_balances(&mut tokens).await;
+                println!("task 3 done");
+            },
+        ];
+
 
         // let tokens = Mutex::new(t);
         // tokio::join!(
@@ -115,7 +140,7 @@ mod tests {
         assert_eq!(tokens.len(), 0);
     }
 
-    #[async_std::test]
+    #[tokio::test]
     async fn should_fetch_data_without_account_success() {
         let mut router = Router::new();
         router.load_config(97).unwrap();
@@ -129,12 +154,13 @@ mod tests {
         assert_eq!(tokens[1].token_weight, Some(100));
     }
 
-    #[async_std::test]
+    #[tokio::test]
     async fn should_fetch_data_with_account_success() {
         let mut router = Router::new();
         router.load_config(97).unwrap();
         let account = "0x1e8b86cd1b420925030fe72a8fd16b47e81c7515".to_string();
         router.set_account(account.clone());
+        println!("start fetching account");
         router.fetch_data().await;
         let tokens = router.load_tokens();
 
@@ -144,8 +170,8 @@ mod tests {
         // epxect token data
         assert_eq!(tokens[0].token_weight, Some(100));
         assert_eq!(tokens[1].token_weight, Some(100));
-        // assert!(tokens[0].ask_price.expect("No ask price").parsed >= Decimal::from_str(&"1").unwrap());
-        // assert!(tokens[1].bid_price.expect("No ask price").parsed >= Decimal::from_str(&"1").unwrap());
+        assert!(tokens[0].ask_price.clone().expect("No ask price").parsed >= Decimal::from_str(&"1").unwrap());
+        assert!(tokens[1].bid_price.clone().expect("No ask price").parsed >= Decimal::from_str(&"1").unwrap());
 
         assert_eq!(tokens[0].get_balance(&account).parse::<f64>().unwrap(), 100.0);
         assert_eq!(tokens[1].get_balance(&account).parse::<f64>().unwrap(), 10.0);

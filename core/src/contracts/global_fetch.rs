@@ -42,7 +42,7 @@ mod tests {
     const FAKE_ADDRESS: &str = "0x1e8b86cd1b420925030fe72a8fd16b47e81c7515";
 
     use super::*;
-    #[async_std::test]
+    #[tokio::test]
     async fn should_not_update_when_no_account_selected() {
         let mut config = load_config(97).unwrap();
         // let tokens = Mutex::new(config.tokens.clone());
@@ -51,16 +51,16 @@ mod tests {
         // assert_eq!(config.tokens[0].get_balance(&FAKE_ADDRESS.to_string()), "0");
     }
 
-    #[async_std::test]
+    #[tokio::test]
     async fn should_update_when_account_is_selected() {
         let mut config = load_config(97).unwrap();
         config.set_selected_account(FAKE_ADDRESS.to_string());
         // let tokens = Mutex::new(config.tokens.clone());
         let mut tokens = (config.tokens.clone());
-        // config.fetch_balances(&tokens).await;
-        // let token0Balance = config.tokens[0].get_balance(&FAKE_ADDRESS.to_string());
-        // assert!(token0Balance.parse::<f64>().unwrap() > 0.0, "token 0 balance ({}) should be greater than 0", token0Balance);
-        // assert_eq!(config.tokens[1].get_balance(&FAKE_ADDRESS.to_string()).parse::<f64>().unwrap(), 10.0);
+        config.fetch_balances(&mut tokens).await;
+        let token0Balance = config.tokens[0].get_balance(&FAKE_ADDRESS.to_string());
+        assert!(token0Balance.parse::<f64>().unwrap() > 0.0, "token 0 balance ({}) should be greater than 0", token0Balance);
+        assert_eq!(config.tokens[1].get_balance(&FAKE_ADDRESS.to_string()).parse::<f64>().unwrap(), 10.0);
     }
 
 }

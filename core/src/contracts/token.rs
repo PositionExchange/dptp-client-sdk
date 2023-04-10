@@ -7,7 +7,7 @@ use rust_decimal::prelude::Decimal;
 
 const PRICE_DECIMALS: u32 = 30;
 
-#[derive(Debug, Deserialize, Serialize, Clone, Default, PartialEq, PartialOrd)]
+#[derive(Debug, Copy, Deserialize, Serialize, Clone, Default, PartialEq, PartialOrd)]
 pub struct Price {
     pub raw: U256,
     pub parsed: Decimal

@@ -1,6 +1,7 @@
 use wasm_bindgen::prelude::*;
 use serde_wasm_bindgen::{to_value, from_value};
 use core::*;
+use std::sync::{Arc, Mutex};
 
 #[wasm_bindgen]
 pub struct WasmRouter {
@@ -64,8 +65,10 @@ impl WasmRouter {
         self.router.set_account(account);
     }
 
+
     pub async fn fetch_data(&mut self) -> Result<(), JsValue> {
-        self.router.fetch_data().await.map_err(|e| JsValue::from_str(&e.to_string()))
+        self.router.fetch_data().await.map_err(|e| JsValue::from_str(&e.to_string()));
+        Ok(())
     }
 }
 
