@@ -66,6 +66,8 @@ impl RouterTrait for Router {
         // let fetch_token_price_task = tokio::spawn(vault.fetch_token_prices(&mut tokens));
         // tokio::try_join!(fetch_token_task, fetch_token_price_task, fetch_account_balance)?;
         Ok(())
+    }
+
     fn load_config(&mut self,chain_id:u64) -> Result<&config::Config, &'static str>  {
         self.config = config::load_config(chain_id).unwrap();
         Ok(&self.config)
@@ -78,10 +80,6 @@ impl RouterTrait for Router {
 
     fn set_account(&mut self, account:String) {
         self.config.set_selected_account(account);
-    }
-
-    async fn fetch_data(&self) -> anyhow::Result<()> {
-        todo!()
     }
 }
 
