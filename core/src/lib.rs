@@ -3,8 +3,11 @@ mod contracts;
 use async_trait::async_trait;
 
 use crate::contracts::token::Token;
+use wasm_bindgen::prelude::*;
+
 
 #[derive(Debug)]
+
 pub struct Router {
     pub config: config::Config,
 }
@@ -21,20 +24,6 @@ pub trait RouterTrait {
 
 #[async_trait]
 impl RouterTrait for Router {
-    fn load_config(&mut self,chain_id:u64) -> Result<&config::Config, &'static str>  {
-        self.config = config::load_config(chain_id).unwrap();
-        Ok(&self.config)
-    }
-
-    fn load_tokens(&self) -> Vec<Token>  {
-        self.config.tokens.clone()
-    }
-
-    fn set_account(&mut self, account:String) {
-        self.config.set_selected_account(account);
-    }
-    
-
     fn new() -> Self {
         Self {
             config: config::Config {
@@ -47,6 +36,20 @@ impl RouterTrait for Router {
                 tokens: vec![],
             },
         }
+    }
+
+    fn load_config(&mut self,chain_id:u64) -> Result<&config::Config, &'static str>  {
+        self.config = config::load_config(chain_id).unwrap();
+        Ok(&self.config)
+    }
+
+    fn load_tokens(&self) -> Vec<Token>  {
+        self.config.tokens.clone()
+    }
+
+
+    fn set_account(&mut self, account:String) {
+        self.config.set_selected_account(account);
     }
 
     async fn fetch_data(&self) -> anyhow::Result<()> {
