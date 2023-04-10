@@ -26,6 +26,12 @@ pub struct Token {
     pub ask_price: Option<Decimal>,
     pub bid_price: Option<Decimal>,
 
+    pub buy_plp_fees: Option<Decimal>,
+    pub sell_plp_fees: Option<Decimal>,
+
+    pub total_liquidity: Option<Decimal>,
+    pub available_liquidity: Option<Decimal>,
+
     pub allowances: Option<HashMap<Address, U256>>,
     pub balances: Option<HashMap<Address, Decimal>>,
 }
@@ -51,6 +57,10 @@ impl Token {
 
             allowances: None,
             balances: None,
+            buy_plp_fees: None,
+            sell_plp_fees: None,
+            total_liquidity: None,
+            available_liquidity: None,
         }
     }
     pub fn build_balance_of_call(&self, account: &String) -> (Address, Bytes) {
