@@ -89,13 +89,13 @@ impl RouterTrait for Router {
         Ok(())
     }
 
-    fn load_config(&mut self,chain_id:u64) -> Result<&config::Config, &'static str>  {
+    fn load_config(&mut self, chain_id:u64) -> Result<&config::Config, &'static str>  {
         self.config = config::load_config(chain_id).unwrap();
         Ok(&self.config)
     }
 
     fn load_tokens(&self) -> Vec<Token>  {
-        self.config.tokens.clone()
+        return self.config.tokens.clone()
     }
 
 
