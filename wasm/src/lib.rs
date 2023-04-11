@@ -43,9 +43,14 @@ pub struct WasmRouter {
 #[wasm_bindgen]
 impl WasmRouter {
     #[wasm_bindgen(constructor)]
-    pub fn new() -> Self {
+    pub fn new(chain_id : u64) -> Self {
+        let mut router = Router::new();
+
+
+        router.load_config(chain_id).expect("load_config failed");
+
         WasmRouter {
-            router: Router::new(),
+            router,
         }
     }
 
@@ -67,7 +72,7 @@ impl WasmRouter {
 
 
     pub async fn fetch_data(&mut self) -> Result<(), JsValue> {
-        self.router.fetch_data().await.map_err(|e| JsValue::from_str(&e.to_string()));
+        self.router.fetch_data().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("featch data failure");
         Ok(())
     }
 }
