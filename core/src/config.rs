@@ -22,9 +22,11 @@ pub struct Chain {
     pub multicall_address: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ContractAddress {
     pub vault: String,
+    pub plp_manager: String,
+    pub plp_token: String,
 }
 
 impl Config {

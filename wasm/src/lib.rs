@@ -47,7 +47,7 @@ impl WasmRouter {
         let mut router = Router::new();
 
 
-        router.load_config(chain_id).expect("load_config failed");
+        router.initilize(chain_id).expect("load_config failed");
 
         WasmRouter {
             router,
@@ -55,7 +55,7 @@ impl WasmRouter {
     }
 
     pub fn load_config(&mut self, chain_id: u64) -> Result<JsValue, JsValue> {
-        match self.router.load_config(chain_id) {
+        match self.router.initilize(chain_id) {
             Ok(config) => Ok(to_value(config).unwrap()),
             Err(e) => Err(JsValue::from_str(e)),
         }

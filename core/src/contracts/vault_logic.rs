@@ -1,5 +1,6 @@
 
 use ethabi::ethereum_types::U256;
+use rust_decimal::Decimal;
 
 use super::{token::Token, vault::VaultState};
 use lazy_static::lazy_static;
@@ -29,7 +30,7 @@ pub trait VaultLogic {
         &self,
         from_amount: &U256,
         pay_token: &Token,
-        plp_price: &U256,
+        // plp_price: &U256,
         // usdp_supply: &U256,
         // total_token_weights: &U256,
     ) -> (U256, u32);
@@ -37,7 +38,7 @@ pub trait VaultLogic {
         &self,
         to_amount: U256,
         from_token: &Token,
-        plp_price: U256,
+        // plp_price: U256,
         // usdp_supply: U256,
         // total_token_weights: U256,
     ) -> (U256, u64);
@@ -45,7 +46,7 @@ pub trait VaultLogic {
         &self,
         to_amount: U256,
         token: &Token,
-        plp_price: U256,
+        // plp_price: U256,
         // usdp_supply: U256,
         // total_token_weights: U256,
     ) -> (U256, u64);
@@ -53,10 +54,11 @@ pub trait VaultLogic {
         &self,
         to_amount: U256,
         from_token: &Token,
-        plp_price: U256,
+        // plp_price: U256,
         // usdp_supply: U256,
         // total_token_weights: U256,
     ) -> (U256, u64);
+    fn get_plp_price(&self, is_buy: bool) -> U256;
 }
 
 
@@ -79,47 +81,55 @@ impl VaultLogic for VaultState  {
         &self,
         from_amount: &U256,
         pay_token: &Token,
-        plp_price: &U256,
+        // plp_price: &U256,
         // usdp_supply: &U256,
         // total_token_weights: &U256,
     ) -> (U256, u32) {
-        get_buy_glp_to_amount(from_amount, pay_token, plp_price, &self.usdp_supply, &self.total_token_weights)
+        get_buy_glp_to_amount(from_amount, pay_token, &self.get_plp_price(true), &self.usdp_supply, &self.total_token_weights)
     }
 
     fn get_sell_glp_from_amount(
         &self,
         to_amount: U256,
         from_token: &Token,
-        plp_price: U256,
+        // plp_price: U256,
         // usdp_supply: U256,
         // total_token_weights: U256,
     ) -> (U256, u64) {
-        get_sell_glp_to_amount(to_amount, from_token, plp_price, self.usdp_supply, self.total_token_weights)
+        get_sell_glp_to_amount(to_amount, from_token, self.get_plp_price(false), self.usdp_supply, self.total_token_weights)
     }
 
     fn get_buy_glp_from_amount(
         &self,
         to_amount: U256,
         token: &Token,
-        plp_price: U256,
+        // plp_price: U256,
         // usdp_supply: U256,
         // total_token_weights: U256,
     ) -> (U256, u64) {
-        get_buy_glp_from_amount(to_amount, token, plp_price, self.usdp_supply, self.total_token_weights)
+        get_buy_glp_from_amount(to_amount, token, self.get_plp_price(true), self.usdp_supply, self.total_token_weights)
     }
 
     fn get_sell_glp_to_amount(
         &self,
         to_amount: U256,
         from_token: &Token,
-        plp_price: U256,
+        // plp_price: U256,
         // usdp_supply: U256,
         // total_token_weights: U256,
     ) -> (U256, u64) {
-        get_sell_glp_to_amount(to_amount, from_token, plp_price, self.usdp_supply, self.total_token_weights)
+        get_sell_glp_to_amount(to_amount, from_token, self.get_plp_price(false), self.usdp_supply, self.total_token_weights)
     }
 
-    
+    fn get_plp_price(&self, is_buy: bool) -> U256 {
+        let aum = if is_buy {self.total_aum[0]} else {self.total_aum[1]};
+        if self.usdp_supply.eq(&U256::from(0)) {
+            return U256::from(0);
+        }
+        else{
+            aum / self.plp_supply
+        }
+    }
 }
 
 

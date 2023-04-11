@@ -10,14 +10,21 @@ use crate::config::Chain;
 
 use super::token::{Token, Price};
 use super::multicall::*;
+use ethabi::Token as AbiToken;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct VaultState {
     pub fee_basis_points: u32,
     pub tax_basis_points: u32,
     pub usdp_supply: U256,
     pub total_token_weights: U256,
 
+    // min aum, max aum
+    // get from plp manager
+    pub total_aum: [U256; 2],
+    pub plp_supply: U256,
+
+    // vault state
     pub mint_burn_fee_basis_points: U256,
     pub swap_fee_basis_points: U256,
     pub stable_swap_fee_basis_points: U256,
@@ -32,19 +39,45 @@ pub struct VaultState {
     pub stable_borrowing_rate_factor: U256,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Vault {
-    vault_addr: String,
-    chain: Chain,
-    state: VaultState,
+    pub vault_addr: String,
+    pub plp_manager: String,
+    pub plp_token: String,
+    pub chain: Chain,
+    pub state: VaultState,
 }
 
 impl Vault {
-    pub fn new(vault_addr: &String, chain: &Chain) -> Self {
-        Self { vault_addr: vault_addr.to_string(), chain: chain.clone() , state: VaultState::default() }
+    pub fn new(vault_addr: &String, plp_manager: &String, plp_token: &String, chain: &Chain) -> Self {
+        Self { vault_addr: vault_addr.to_string(), plp_token: plp_token.to_string(), plp_manager: plp_manager.to_string(), chain: chain.clone() , state: VaultState::default() }
     }
 
-    pub async fn fetch_vault_state(&mut self) -> anyhow::Result<()> {
+
+    pub async fn init_plp_manager_state(&mut self) -> anyhow::Result<()> {
+        let calls = vec![
+            // get aum
+            get_encode_address_and_params(&self.plp_manager, &"getAum(bool)".to_string(), &vec![AbiToken::Bool(true)]),
+            get_encode_address_and_params(&self.plp_manager, &"getAum(bool)".to_string(), &vec![AbiToken::Bool(false)]),
+            get_encode_address_and_params(&self.plp_token, &"totalSupply()".to_string(), &vec![]),
+        ];
+        let results = self.chain.execute_multicall_raw(calls).await.unwrap();
+
+        let formated_results: Vec<_> = results.into_iter().map(
+            |x| ethabi::decode(&[ethabi::ParamType::Uint(256)], &x).unwrap()
+        ).collect();
+        if let [aum1, aum2, plp_supply] = &formated_results[..] {
+            self.state.total_aum[0] = aum1[0].clone().into_uint().expect("Failed to parse aum1");
+            self.state.total_aum[1] = aum2[0].clone().into_uint().expect("Failed to parse aum2");
+            self.state.plp_supply = plp_supply[0].clone().into_uint().expect("Failed to parse plp_supply");
+        }else{
+            anyhow::bail!("Failed to fetch plp manager state. Maybe invalid contract ABI");
+        }
+
+        Ok(())
+    }
+
+    pub async fn init_vault_state(&mut self) -> anyhow::Result<()> {
         let calls = vec![
             get_vault_variable_selector(&self.vault_addr.clone(), &"mintBurnFeeBasisPoints".to_string()),
             get_vault_variable_selector(&self.vault_addr.clone(), &"swapFeeBasisPoints".to_string()),
@@ -178,6 +211,18 @@ fn _get_function_selector(function_signature: &str) -> [u8; 4] {
     selector
 }
 
+fn get_encode_address_and_params(address: &str, function_signature: &str, params: &[ethabi::Token]) -> (Address, Bytes) {
+    let address = Address::from_str(address).expect("Failed to parse address");
+    let data = encode_selector_and_params(function_signature, params);
+    (address, data)
+}
+
+fn encode_selector_and_params(function_signature: &str, params: &[ethabi::Token]) -> Bytes {
+    let selector = _get_function_selector(function_signature);
+    let mut encoded = selector.to_vec();
+    encoded.extend(ethabi::encode(params));
+    Bytes::from(encoded)
+}
 
 
 #[cfg(test)]
@@ -192,6 +237,15 @@ mod tests {
         ];
         tokens
     }
+    fn create_vault() -> Vault {
+        let chain = Chain {
+            chain_id: 97,
+            rpc_urls: vec!["https://data-seed-prebsc-1-s1.binance.org:8545/".to_string()],
+            multicall_address: "0x6e5bb1a5ad6f68a8d7d6a5e47750ec15773d6042".to_string(),
+        };
+        return Vault::new(&"0xF55Fc8e91c0c893568dB750cD4a4eB2D953E80a5".to_string(), &"0xDF49C2d458892B681331F4EEC0d09A88b283f444".to_string(), &"0x792bA5e9E0Cd15083Ec2f58E434d875892005b91".to_string(), &chain);
+    }
+
     #[test]
     fn test_get_function_selector() {
         let function_signature = "transfer(address,uint256)";
@@ -203,15 +257,7 @@ mod tests {
     }
     #[tokio::test]
     async fn test_fetch_token_configuration() {
-        let vault = Vault {
-            vault_addr: "0xF55Fc8e91c0c893568dB750cD4a4eB2D953E80a5".to_string(),
-            chain: Chain {
-                chain_id: 97,
-                rpc_urls: vec!["https://data-seed-prebsc-1-s1.binance.org:8545/".to_string()],
-                multicall_address: "0x6e5bb1a5ad6f68a8d7d6a5e47750ec15773d6042".to_string(),
-            },
-            state: VaultState::default(),
-        };
+        let vault = create_vault();
         // let tokens = Mutex::new(create_tokens());
         let mut tokens = create_tokens();
         let result = vault.fetch_token_configuration(&mut tokens).await;
@@ -226,17 +272,9 @@ mod tests {
 
     #[tokio::test]
     async fn test_fetech_vault_state() {
-        let mut vault = Vault {
-            vault_addr: "0x3e6fb757447d34347AD940E0E789d976a1cf3842".to_string(),
-            chain: Chain {
-                chain_id: 97,
-                rpc_urls: vec!["https://data-seed-prebsc-1-s1.binance.org:8545/".to_string()],
-                multicall_address: "0x6e5bb1a5ad6f68a8d7d6a5e47750ec15773d6042".to_string(),
-            },
-            state: VaultState::default(),
-        };
+        let mut vault = create_vault();
         // let tokens = Mutex::new(create_tokens());
-        let result = vault.fetch_vault_state().await;
+        let result = vault.init_vault_state().await;
         assert!(result.is_ok());
         // let tokens = tokens.lock().await;
         // expect vault state is modified
@@ -249,15 +287,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_fetch_token_prices() {
-        let vault = Vault {
-            vault_addr: "0xF55Fc8e91c0c893568dB750cD4a4eB2D953E80a5".to_string(),
-            chain: Chain {
-                chain_id: 97,
-                rpc_urls: vec!["https://data-seed-prebsc-1-s1.binance.org:8545/".to_string()],
-                multicall_address: "0x6e5bb1a5ad6f68a8d7d6a5e47750ec15773d6042".to_string(),
-            },
-            state: VaultState::default(),
-        };
+        let vault = create_vault();
 
         // let mut tokens = Mutex::new(create_tokens());
         let mut tokens = create_tokens();
@@ -271,4 +301,26 @@ mod tests {
         assert!(tokens[0].bid_price.unwrap().parsed.gt(&rust_decimal::Decimal::from(0)));
         assert!(tokens[1].bid_price.unwrap().parsed.gt(&rust_decimal::Decimal::from(0)));
     }
+
+    #[tokio::test]
+    async fn test_init_plp_manager_state() {
+        let mut vault = create_vault();
+        let result = vault.init_plp_manager_state().await;
+
+        assert_eq!(result.is_ok(), true);
+
+        assert!(vault.state.total_aum[0] > U256::from(0));
+        assert!(vault.state.total_aum[1] > U256::from(0));
+        assert!(vault.state.plp_supply > U256::from(0));
+    }
+
+    #[test]
+    fn test_encode_selector_and_params(){
+        let function_signature = "transfer(address,uint256)";
+        let params = vec![ethabi::Token::Address(Address::from_str("0x6e5bb1a5ad6f68a8d7d6a5e47750ec15773d6042").unwrap()), ethabi::Token::Uint(U256::from(100))];
+        let result = encode_selector_and_params(function_signature, &params);
+        println!("{}", hex::encode(result.clone()));
+        assert_eq!(hex::encode(result.clone()), "a9059cbb0000000000000000000000006e5bb1a5ad6f68a8d7d6a5e47750ec15773d60420000000000000000000000000000000000000000000000000000000000000064");
+    }
+
 }
