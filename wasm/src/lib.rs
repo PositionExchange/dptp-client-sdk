@@ -75,5 +75,16 @@ impl WasmRouter {
         self.router.fetch_data().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("featch data failure");
         Ok(())
     }
+
+    pub async fn init_vault_state(&mut self) -> Result<(), JsValue> {
+        self.router.vault.init_vault_state().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("init vault state failure");
+        Ok(())
+    }
+
+    // Note: Need to call init_vault_state first
+    pub fn get_vault_state(&mut self) -> JsValue {
+        let vault_state = self.router.vault.state;
+        to_value(&vault_state).unwrap()
+    }
 }
 

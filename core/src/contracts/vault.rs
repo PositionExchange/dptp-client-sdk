@@ -1,18 +1,14 @@
 use std::{ops::Div, str::FromStr, time::Duration};
 
-use ethers::{
-    types::{Address, Bytes, U256},
-};
-use rust_decimal::Decimal;
+use ethers::types::{Address, Bytes, U256};
+use serde::Serialize;
 use tiny_keccak::{Keccak, Hasher};
-
 use crate::config::Chain;
-
 use super::token::{Token, Price};
 use super::multicall::*;
 use ethabi::Token as AbiToken;
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Serialize, Clone, Copy)]
 pub struct VaultState {
     pub fee_basis_points: u32,
     pub tax_basis_points: u32,
@@ -53,8 +49,15 @@ impl Vault {
         Self { vault_addr: vault_addr.to_string(), plp_token: plp_token.to_string(), plp_manager: plp_manager.to_string(), chain: chain.clone() , state: VaultState::default() }
     }
 
+    pub async fn init_vault_state(&mut self) -> anyhow::Result<()> {
+        // TODO move to join all?
+        &self.init_vault_state_data().await;
+        &self.init_plp_manager_state().await;
+        Ok(())
+    }
 
-    pub async fn init_plp_manager_state(&mut self) -> anyhow::Result<()> {
+
+    async fn init_plp_manager_state(&mut self) -> anyhow::Result<()> {
         let calls = vec![
             // get aum
             get_encode_address_and_params(&self.plp_manager, &"getAum(bool)".to_string(), &vec![AbiToken::Bool(true)]),
@@ -77,7 +80,7 @@ impl Vault {
         Ok(())
     }
 
-    pub async fn init_vault_state(&mut self) -> anyhow::Result<()> {
+    async fn init_vault_state_data(&mut self) -> anyhow::Result<()> {
         let calls = vec![
             get_vault_variable_selector(&self.vault_addr.clone(), &"mintBurnFeeBasisPoints".to_string()),
             get_vault_variable_selector(&self.vault_addr.clone(), &"swapFeeBasisPoints".to_string()),

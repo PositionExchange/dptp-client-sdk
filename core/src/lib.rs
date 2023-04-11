@@ -13,7 +13,6 @@ use contracts::global_fetch::*;
 pub struct Router {
     pub config: config::Config,
     pub vault: Vault,
-    
 }
 
 #[async_trait(?Send)]
