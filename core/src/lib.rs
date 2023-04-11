@@ -3,7 +3,7 @@ mod contracts;
 use async_trait::async_trait;
 use contracts::vault::Vault;
 // use futures::try_join;
-use std::{sync::{Arc, Mutex}, time::Instant};
+use std::{sync::{Arc, Mutex}};
 // use tokio::{task::futures};
 
 use crate::contracts::token::Token;
@@ -54,7 +54,7 @@ impl RouterTrait for Router {
         let tokens = tokio::sync::Mutex::new(tokens);
         // let tokens1 = Arc::clone(&tokens);
         // let tokens2 = Arc::clone(&tokens);
-        let startTime = Instant::now();
+        // let startTime = Instant::now();
 
         // TODO move the lock to the function??
         let _tasks = tokio::join![
@@ -63,21 +63,21 @@ impl RouterTrait for Router {
                 let mut tokens = tokens.lock().await;
                 println!("task 1 start after lock");
                 self.vault.fetch_token_configuration(&mut tokens).await;
-                println!("task 1 done, time: {}", startTime.elapsed().as_millis());
+                // println!("task 1 done, time: {}", startTime.elapsed().as_millis());
             },
             async {
                 println!("task 2 start");
                 let mut tokens = tokens.lock().await;
                 println!("task 2 start after lock");
                 self.vault.fetch_token_prices(&mut tokens).await;
-                println!("task 2 done, time {}", startTime.elapsed().as_millis());
+                // println!("task 2 done, time {}", startTime.elapsed().as_millis());
             },
             async {
                 println!("task 3 start");
                 let mut tokens = tokens.lock().await;
                 println!("task 3 start after lock");
                 self.config.fetch_balances(&mut tokens).await;
-                println!("task 3 done, time {}", startTime.elapsed().as_millis());
+                // println!("task 3 done, time {}", startTime.elapsed().as_millis());
             },
         ];
 

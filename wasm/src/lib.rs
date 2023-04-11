@@ -1,11 +1,12 @@
 use wasm_bindgen::prelude::*;
 use serde_wasm_bindgen::{to_value, from_value};
-use core::*;
+use core::{*};
 use std::sync::{Arc, Mutex};
+use console_error_panic_hook;
 
 #[wasm_bindgen]
 pub struct WasmRouter {
-    router: core::Router,//Box<dyn core::Router>,
+    router: core::Router,
 }
 
 // Note: this is the example to custom export struct to js
@@ -88,3 +89,10 @@ impl WasmRouter {
     }
 }
 
+#[wasm_bindgen(start)]
+pub fn main() {
+    // Set the panic hook to forward messages to console.error
+    console_error_panic_hook::set_once();
+
+    // Your other code...
+}
