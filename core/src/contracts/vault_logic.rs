@@ -1,10 +1,12 @@
 
 use ethabi::ethereum_types::U256;
 
-use super::token::Token;
+use super::{token::Token, vault::VaultState};
 use lazy_static::lazy_static;
 
 const USDP_DECIMALS: u32 = 18;
+const MINT_BURN_FEE_BASIS_POINTS: u32 = 0;
+const TAX_BASIS_POINTS: u32 = 0;
 
 lazy_static! {
     static ref PRECISION: U256 = U256::from(0);
@@ -16,41 +18,135 @@ pub trait VaultLogic {
         &self,
         token_weight: u64,
         token_usdg_amount: &U256,
-        usdg_delta: &U256,
-        fee_basis_points: u32,
-        tax_basis_points: u32,
+        usdp_delta: &U256,
+        // fee_basis_points: u32,
+        // tax_basis_points: u32,
         increment: bool,
-        usdg_supply: &U256,
-        total_token_weights: &U256,
+        // usdp_supply: &U256,
+        // total_token_weights: &U256,
     ) -> u32;
+    fn get_buy_glp_to_amount(
+        &self,
+        from_amount: &U256,
+        pay_token: &Token,
+        plp_price: &U256,
+        // usdp_supply: &U256,
+        // total_token_weights: &U256,
+    ) -> (U256, u32);
+    fn get_sell_glp_from_amount(
+        &self,
+        to_amount: U256,
+        from_token: &Token,
+        plp_price: U256,
+        // usdp_supply: U256,
+        // total_token_weights: U256,
+    ) -> (U256, u64);
+    fn get_buy_glp_from_amount(
+        &self,
+        to_amount: U256,
+        token: &Token,
+        plp_price: U256,
+        // usdp_supply: U256,
+        // total_token_weights: U256,
+    ) -> (U256, u64);
+    fn get_sell_glp_to_amount(
+        &self,
+        to_amount: U256,
+        from_token: &Token,
+        plp_price: U256,
+        // usdp_supply: U256,
+        // total_token_weights: U256,
+    ) -> (U256, u64);
+}
+
+
+impl VaultLogic for VaultState  {
+    fn get_fee_basis_points(
+        &self,
+        token_weight: u64,
+        token_usdg_amount: &U256,
+        usdp_delta: &U256,
+        // fee_basis_points: u32,
+        // tax_basis_points: u32,
+        increment: bool,
+        // usdp_supply: &U256,
+        // total_token_weights: &U256,
+    ) -> u32 {
+        get_fee_basis_points(token_weight, token_usdg_amount, usdp_delta, self.fee_basis_points, self.tax_basis_points, increment, &self.usdp_supply, &self.total_token_weights)
+    }
+
+    fn get_buy_glp_to_amount(
+        &self,
+        from_amount: &U256,
+        pay_token: &Token,
+        plp_price: &U256,
+        // usdp_supply: &U256,
+        // total_token_weights: &U256,
+    ) -> (U256, u32) {
+        get_buy_glp_to_amount(from_amount, pay_token, plp_price, &self.usdp_supply, &self.total_token_weights)
+    }
+
+    fn get_sell_glp_from_amount(
+        &self,
+        to_amount: U256,
+        from_token: &Token,
+        plp_price: U256,
+        // usdp_supply: U256,
+        // total_token_weights: U256,
+    ) -> (U256, u64) {
+        get_sell_glp_to_amount(to_amount, from_token, plp_price, self.usdp_supply, self.total_token_weights)
+    }
+
+    fn get_buy_glp_from_amount(
+        &self,
+        to_amount: U256,
+        token: &Token,
+        plp_price: U256,
+        // usdp_supply: U256,
+        // total_token_weights: U256,
+    ) -> (U256, u64) {
+        get_buy_glp_from_amount(to_amount, token, plp_price, self.usdp_supply, self.total_token_weights)
+    }
+
+    fn get_sell_glp_to_amount(
+        &self,
+        to_amount: U256,
+        from_token: &Token,
+        plp_price: U256,
+        // usdp_supply: U256,
+        // total_token_weights: U256,
+    ) -> (U256, u64) {
+        get_sell_glp_to_amount(to_amount, from_token, plp_price, self.usdp_supply, self.total_token_weights)
+    }
 
     
 }
+
 
 fn adjust_for_decimals(amount: &U256, div_decimals: u32, mul_decimals: u32) -> U256 {
     amount * expand_decimals(1, mul_decimals) / expand_decimals(1, div_decimals)
 }
 
-fn get_target_usdg_amount(token_weight: u64, usdg_supply: &U256, total_token_weights: &U256) -> Option<U256> {
+fn get_target_usdg_amount(token_weight: u64, usdp_supply: &U256, total_token_weights: &U256) -> Option<U256> {
     let token_weight = U256::from(token_weight);
-    if token_weight.is_zero() || usdg_supply.is_zero() {
+    if token_weight.is_zero() || usdp_supply.is_zero() {
         return None;
     }
 
-    Some(token_weight * usdg_supply / total_token_weights)
+    Some(token_weight * usdp_supply / total_token_weights)
 }
 
-pub fn get_buy_glp_to_amount(
+fn get_buy_glp_to_amount(
     from_amount: &U256,
     pay_token: &Token,
-    glp_price: &U256,
-    usdg_supply: &U256,
+    plp_price: &U256,
+    usdp_supply: &U256,
     total_token_weights: &U256,
 ) -> (U256, u32) {
     let default_value = (U256::zero(), 0);
     if from_amount.is_zero()
-        || glp_price.is_zero()
-        || usdg_supply.is_zero()
+        || plp_price.is_zero()
+        || usdp_supply.is_zero()
         || total_token_weights.is_zero()
     {
         return default_value;
@@ -66,7 +162,7 @@ pub fn get_buy_glp_to_amount(
     let mut glp_amount = from_amount
         .checked_mul(min_price)
         .unwrap()
-        .checked_div(*glp_price)
+        .checked_div(*plp_price)
         .unwrap();
     glp_amount = adjust_for_decimals(&glp_amount, pay_token.decimals.into(), USDP_DECIMALS);
 
@@ -85,7 +181,7 @@ pub fn get_buy_glp_to_amount(
         MINT_BURN_FEE_BASIS_POINTS,
         TAX_BASIS_POINTS,
         true,
-        usdg_supply,
+        usdp_supply,
         total_token_weights
     );
 
@@ -103,14 +199,14 @@ pub fn get_buy_glp_to_amount(
 fn get_fee_basis_points(
     token_weight: u64,
     token_usdg_amount: &U256,
-    usdg_delta: &U256,
+    usdp_delta: &U256,
     fee_basis_points: u32,
     tax_basis_points: u32,
     increment: bool,
-    usdg_supply: &U256,
+    usdp_supply: &U256,
     total_token_weights: &U256,
 ) -> u32 {
-    if token_usdg_amount.is_zero() || usdg_supply.is_zero() || total_token_weights.is_zero() {
+    if token_usdg_amount.is_zero() || usdp_supply.is_zero() || total_token_weights.is_zero() {
         return 0;
     }
 
@@ -119,16 +215,16 @@ fn get_fee_basis_points(
 
     let initial_amount = token_usdg_amount.clone();
     let next_amount = if increment {
-        initial_amount.clone() + usdg_delta
+        initial_amount.clone() + usdp_delta
     } else {
-        if usdg_delta > &initial_amount {
+        if usdp_delta > &initial_amount {
             U256::zero()
         } else {
-            initial_amount.clone() - usdg_delta
+            initial_amount.clone() - usdp_delta
         }
     };
 
-    let target_amount = get_target_usdg_amount(token_weight, usdg_supply, total_token_weights).expect("No target amount");
+    let target_amount = get_target_usdg_amount(token_weight, usdp_supply, total_token_weights).expect("No target amount");
     if target_amount.is_zero() {
         return fee_basis_points.low_u32();
     }
@@ -164,4 +260,145 @@ fn get_fee_basis_points(
 fn expand_decimals(value: u32, decimals: u32) -> U256 {
     U256::from(value) * U256::from(10u32).pow(decimals.into())
 }
+
+fn get_sell_glp_from_amount(
+    to_amount: U256,
+    swap_token: &Token,
+    plp_price: U256,
+    usdp_supply: U256,
+    total_token_weights: U256,
+) -> (U256, u64) {
+    if to_amount == U256::zero()
+        || usdp_supply == U256::zero()
+        || total_token_weights == U256::zero()
+    {
+        return (U256::zero(), 0);
+    }
+    let max_price = swap_token.max_price.clone().expect("no max price").raw;
+
+    if max_price == U256::zero() {
+        return (U256::zero(), 0);
+    }
+
+    let mut glp_amount = to_amount * max_price / plp_price;
+    glp_amount = adjust_for_decimals(&glp_amount, swap_token.decimals.into(), USDP_DECIMALS);
+
+    let mut usdg_amount = to_amount * max_price / *PRECISION;
+    usdg_amount = adjust_for_decimals(&usdg_amount, swap_token.decimals.into(), USDP_DECIMALS);
+
+    // In the Vault contract, the USDG supply is reduced before the fee basis points are calculated
+    let usdp_supply = usdp_supply
+        .checked_sub(usdg_amount)
+        .unwrap_or(U256::zero());
+
+    let fee_basis_points = get_fee_basis_points(
+        swap_token.token_weight.unwrap_or(0),
+        &swap_token.usdp_amount.unwrap().checked_sub(usdg_amount).unwrap_or(U256::zero()),
+        &usdg_amount,
+        MINT_BURN_FEE_BASIS_POINTS,
+        TAX_BASIS_POINTS,
+        false,
+        &usdp_supply,
+        &total_token_weights,
+    );
+
+    glp_amount = glp_amount * *BASIS_POINTS_DIVISOR / (*BASIS_POINTS_DIVISOR - fee_basis_points);
+
+    (glp_amount, fee_basis_points.into())
+}
+
+
+
+pub fn get_buy_glp_from_amount(
+    to_amount: U256,
+    token: &Token,
+    plp_price: U256,
+    usdp_supply: U256,
+    total_token_weights: U256,
+) -> (U256, u64) {
+    let default_value = (U256::zero(), 0);
+
+    let min_price = token.min_price.clone().expect("no min price").raw;
+
+    let mut from_amount = to_amount * plp_price / min_price;
+    from_amount = adjust_for_decimals(&from_amount, USDP_DECIMALS, token.decimals.into());
+
+    let usdg_amount = to_amount * plp_price / *PRECISION;
+    let fee_basis_points = get_fee_basis_points(
+        token.token_weight.unwrap_or(0),
+        &token.usdp_amount.unwrap(),
+        &usdg_amount,
+        MINT_BURN_FEE_BASIS_POINTS,
+        TAX_BASIS_POINTS,
+        true,
+        &usdp_supply,
+        &total_token_weights,
+    );
+
+    from_amount = from_amount * *BASIS_POINTS_DIVISOR / (*BASIS_POINTS_DIVISOR - fee_basis_points);
+
+    (from_amount, fee_basis_points.into())
+}
+
+pub fn get_sell_glp_to_amount(
+    to_amount: U256,
+    from_token: &Token,
+    plp_price: U256,
+    usdp_supply: U256,
+    total_token_weights: U256,
+) -> (U256, u64) {
+    let default_value = (U256::zero(), 0);
+
+    let max_price = from_token.max_price.clone().expect("no max price").raw;
+
+    let mut from_amount = to_amount * plp_price / max_price;
+    from_amount = adjust_for_decimals(&from_amount, USDP_DECIMALS, from_token.decimals.into());
+
+    let usdg_amount = to_amount * plp_price / *PRECISION;
+
+    // In the Vault contract, the USDG supply is reduced before the fee basis points are calculated
+    let new_usdg_supply = usdp_supply.clone().checked_sub(usdg_amount).unwrap_or(U256::zero());
+
+    // In the Vault contract, the token.usdg_amount is reduced before the fee basis points are calculated
+    let fee_basis_points = get_fee_basis_points(
+        from_token.token_weight.unwrap_or(0),
+        &from_token.usdp_amount.unwrap_or(U256::from(0)).checked_sub(usdg_amount).unwrap_or(U256::zero()),
+        &usdg_amount,
+        MINT_BURN_FEE_BASIS_POINTS,
+        TAX_BASIS_POINTS,
+        false,
+        &new_usdg_supply,
+        &total_token_weights,
+    );
+
+    from_amount = from_amount * *BASIS_POINTS_DIVISOR / (*BASIS_POINTS_DIVISOR - fee_basis_points);
+
+    (from_amount, fee_basis_points.into())
+}
+
+// Usage example
+// fn main() {
+//     let mut info_tokens = HashMap::new();
+//
+//     // Fill the info_tokens with data
+//
+//     let from_amount = U256::from(1000);
+//     let swap_token_address = "0x123...";
+//     let plp_price = U256::from(2000);
+//     let usdp_supply = U256::from(5000);
+//     let total_token_weights = U256::from(8000);
+//
+//     let (glp_amount, fee_basis_points) = get_buy_glp_to_amount(
+//         from_amount,
+//         swap_token_address,
+//         &info_tokens,
+//         plp_price,
+//         usdp_supply,
+//         total_token_weights,
+//     );
+//
+//     println!("GLP amount: {:?}", glp_amount);
+//     println!("Fee basis points: {:?}", fee_basis_points);
+// }
+//
 

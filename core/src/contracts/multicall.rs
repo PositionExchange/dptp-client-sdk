@@ -28,7 +28,7 @@ impl ChainMulticallTrait for Chain {
         let client = Arc::new(provider.clone());
         let address: Address = self.multicall_address.parse().expect("invalid multicall address, check your config");
         let multicall = Multicall::new(address, client);
-        let (_block_number, return_data) = multicall.aggregate(calls).call().await.expect("failed to execute multicall");
+        let (_block_number, return_data) = multicall.aggregate(calls).call().await.expect("Failed to execute multicall");
         println!("return data {:?}", return_data);
         // let abi = ethabi::Contract::load(interface.as_bytes()).unwrap();
         // let function = abi.function(fn_name).unwrap();

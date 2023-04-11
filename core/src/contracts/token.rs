@@ -46,6 +46,7 @@ pub struct Token {
     pub ask_price: Option<Price>,
     pub bid_price: Option<Price>,
     pub min_price: Option<Price>,
+    pub max_price: Option<Price>,
 
     pub buy_plp_fees: Option<Decimal>,
     pub sell_plp_fees: Option<Decimal>,
@@ -78,6 +79,7 @@ impl Token {
             ask_price: None,
             bid_price: None,
             min_price: None,
+            max_price: None,
 
             allowances: None,
             balances: None,
