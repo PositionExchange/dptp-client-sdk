@@ -1,7 +1,14 @@
+extern crate console_error_panic_hook;
 use wasm_bindgen::prelude::*;
 use serde_wasm_bindgen::{to_value, from_value};
 use core::*;
 use std::sync::{Arc, Mutex};
+use std::panic;
+use wasm_bindgen_test::*;
+
+#[cfg(feature = "wee_alloc")]
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
 pub struct WasmRouter {
@@ -44,11 +51,15 @@ pub struct WasmRouter {
 impl WasmRouter {
     #[wasm_bindgen(constructor)]
     pub fn new(chain_id : u64) -> Self {
+        panic::set_hook(Box::new(console_error_panic_hook::hook));
         let mut router = Router::new();
 
 
         router.load_config(chain_id).expect("load_config failed");
 
+        // panic::set_hook(Box::new(console_error_panic_hook::hook));
+        console_error_panic_hook::set_once();
+        // set_panic_hook();
         WasmRouter {
             router,
         }
@@ -76,4 +87,35 @@ impl WasmRouter {
         Ok(())
     }
 }
+
+//
+// pub fn set_panic_hook() {
+//     // When the `console_error_panic_hook` feature is enabled, we can call the
+//     // `set_panic_hook` function at least once during initialization, and then
+//     // we will get better error messages if our code ever panics.
+//     //
+//     // For more details see
+//     // https://github.com/rustwasm/console_error_panic_hook#readme
+//     #[cfg(feature = "console_error_panic_hook")]
+//     console_error_panic_hook::set_once();
+// }
+//
+
+#[wasm_bindgen_test]
+fn fetch_data(){
+    let mut router = WasmRouter::new(97);
+    router.fetch_data();
+}
+
+
+wasm_bindgen_test_configure!(run_in_browser);
+// #[wasm_bindgen_test]
+// mod test {
+//
+//     #[wasm_bindgen_test]
+//     fn fetch_data(){
+//         let mut router = WasmRouter::new(97);
+//         router.fetch_data();
+//     }
+// }
 
