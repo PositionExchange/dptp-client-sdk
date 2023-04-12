@@ -31,6 +31,7 @@ pub struct Token {
     pub address: String,
     pub name: String,
     pub symbol: String,
+    pub logo_url : String,
     pub decimals: u8,
     // get from Vault.tokenConfigurations(address token) function
     pub token_weight: Option<u64>,
@@ -61,12 +62,13 @@ pub struct Token {
 }
 
 impl Token {
-    pub fn new(chain_id: u64, address: &str, name: &str, symbol: &str, decimals: u8) -> Self {
+    pub fn new(chain_id: u64, address: &str, name: &str, symbol: &str, decimals: u8, logo_url : &str) -> Self {
         Self {
             chain_id: Some(chain_id),
             address: address.to_string(),
             name: name.to_string(),
             symbol: symbol.to_string(),
+            logo_url : logo_url.to_string(),
             decimals,
             token_weight: None,
             is_whitelisted: None,
@@ -215,7 +217,7 @@ mod tests {
     use super::*;
 
     fn create_mock_token() -> Token {
-        Token::new(97, "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984", "Uniswap", "UNI", 18)
+        Token::new(97, "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984", "Uniswap", "UNI", 18, "")
     }
 
     #[test]

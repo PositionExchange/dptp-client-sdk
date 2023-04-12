@@ -104,6 +104,28 @@ impl RouterTrait for Router {
             },
         ];
 
+        // async {
+        //     println!("task 1 start");
+        //     let mut tokens = tokens.lock().await;
+        //     println!("task 1 start after lock");
+        //     self.vault.fetch_token_configuration(&mut tokens).await;
+        //     // println!("task 1 done, time: {}", startTime.elapsed().as_millis());
+        // };
+        // async {
+        //     println!("task 2 start");
+        //     let mut tokens = tokens.lock().await;
+        //     println!("task 2 start after lock");
+        //     self.vault.fetch_token_prices(&mut tokens).await;
+        //     // println!("task 2 done, time {}", startTime.elapsed().as_millis());
+        // };
+        // async {
+        //     println!("task 3 start");
+        //     let mut tokens = tokens.lock().await;
+        //     println!("task 3 start after lock");
+        //     self.config.fetch_balances(&mut tokens).await;
+        //     // println!("task 3 done, time {}", startTime.elapsed().as_millis());
+        // };
+
         // re assign new tokens
         self.config.tokens = tokens.lock().await.to_vec();
 
@@ -150,7 +172,7 @@ mod tests {
     async fn should_fetch_data_without_account_success() {
         let mut router = Router::new();
         router.initilize(97).unwrap();
-        router.fetch_data().await;
+        router.fetch_data().await.expect("fetch data failed");
         let tokens = router.load_tokens();
 
         println!("Loaded tokens: {:?}", tokens);
@@ -167,7 +189,7 @@ mod tests {
         let account = "0x1e8b86cd1b420925030fe72a8fd16b47e81c7515".to_string();
         router.set_account(account.clone());
         println!("start fetching account");
-        router.fetch_data().await;
+        router.fetch_data().await.expect("fetch data in should_fetch_data_with_account_success failure");
         let tokens = router.load_tokens();
 
         println!("Loaded tokens: {:?}", tokens);
