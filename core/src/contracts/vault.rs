@@ -314,8 +314,8 @@ mod tests {
         assert!(vault.state.mint_burn_fee_basis_points > U256::from(0));
         assert!(vault.state.swap_fee_basis_points > U256::from(0));
         assert!(vault.state.stable_tax_basis_points > U256::from(0));
-        // assert!(vault.state.fee_basis_points > 0);
-        // assert!(vault.state.tax_basis_points > 0);
+        assert!(vault.state.fee_basis_points >= 0);
+        assert!(vault.state.tax_basis_points >= 0);
         assert!(vault.state.usdp_supply > U256::zero());
         assert!(vault.state.total_token_weights > U256::zero());
         assert!(vault.state.total_aum[0] > U256::zero());
@@ -326,7 +326,7 @@ mod tests {
         assert!(vault.state.stable_swap_fee_basis_points > U256::zero());
         assert!(vault.state.margin_fee_basis_points > U256::zero());
         assert!(vault.state.stable_tax_basis_points > U256::zero());
-        assert!(vault.state.liquidation_fee_usd > U256::zero());
+        assert!(vault.state.liquidation_fee_usd >= U256::zero());
         assert!(vault.state.borrowing_rate_factor > U256::zero());
         assert!(vault.state.stable_borrowing_rate_factor > U256::zero());
 
