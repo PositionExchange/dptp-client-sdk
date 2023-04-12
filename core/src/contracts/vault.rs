@@ -10,6 +10,7 @@ use ethabi::Token as AbiToken;
 
 #[derive(Default, Debug, Serialize, Clone, Copy)]
 pub struct VaultState {
+    pub usdp_address: Address,
     pub fee_basis_points: u32,
     pub tax_basis_points: u32,
     pub usdp_supply: U256,
@@ -50,9 +51,31 @@ impl Vault {
     }
 
     pub async fn init_vault_state(&mut self) -> anyhow::Result<()> {
+        // Note: Need to call init address first to initialize the addresses
+        let _ = &self.init_address_state().await;
         // TODO move to join all?
+        println!("addr {:?}", self.state.usdp_address);
         &self.init_vault_state_data().await;
         &self.init_plp_manager_state().await;
+        Ok(())
+    }
+
+    /// Using multicall to fetch addresses from contracts
+    async fn init_address_state(&mut self) -> anyhow::Result<()> {
+        // Note This function is only to fetch addresses
+        let calls = vec![
+            get_encode_address_and_params(&self.vault_addr, &"usdp()".to_string(), &vec![]),
+        ];
+        let results = self.chain.execute_multicall_raw(calls).await.unwrap();
+        let formated_results: Vec<_> = results.into_iter().map(
+            |x| ethabi::decode(&[ethabi::ParamType::Address], &x).unwrap()
+        ).collect();
+        if let [usdp_addr] = &formated_results[..] {
+            self.state.usdp_address = usdp_addr[0].clone().into_address().expect("Failed to parse usdp_addr");
+            println!("init address state {:?}", self.state.usdp_address);
+        }else{
+            anyhow::bail!("Failed to parse addresses state, check your contract and ABI");
+        }
         Ok(())
     }
 
@@ -63,16 +86,19 @@ impl Vault {
             get_encode_address_and_params(&self.plp_manager, &"getAum(bool)".to_string(), &vec![AbiToken::Bool(true)]),
             get_encode_address_and_params(&self.plp_manager, &"getAum(bool)".to_string(), &vec![AbiToken::Bool(false)]),
             get_encode_address_and_params(&self.plp_token, &"totalSupply()".to_string(), &vec![]),
+            (self.state.usdp_address, encode_selector_and_params(&"totalSupply()".to_string(), &vec![])),
         ];
         let results = self.chain.execute_multicall_raw(calls).await.unwrap();
+        println!("usdp_address {:?}", self.state.usdp_address);
 
         let formated_results: Vec<_> = results.into_iter().map(
             |x| ethabi::decode(&[ethabi::ParamType::Uint(256)], &x).unwrap()
         ).collect();
-        if let [aum1, aum2, plp_supply] = &formated_results[..] {
+        if let [aum1, aum2, plp_supply, usdp_supply] = &formated_results[..] {
             self.state.total_aum[0] = aum1[0].clone().into_uint().expect("Failed to parse aum1");
             self.state.total_aum[1] = aum2[0].clone().into_uint().expect("Failed to parse aum2");
             self.state.plp_supply = plp_supply[0].clone().into_uint().expect("Failed to parse plp_supply");
+            self.state.usdp_supply = usdp_supply[0].clone().into_uint().expect("Failed to parse usdp_supply");
         }else{
             anyhow::bail!("Failed to fetch plp manager state. Maybe invalid contract ABI");
         }
@@ -95,6 +121,7 @@ impl Vault {
             get_vault_variable_selector(&self.vault_addr.clone(), &"borrowingRateInterval".to_string()),
             get_vault_variable_selector(&self.vault_addr.clone(), &"borrowingRateFactor".to_string()),
             get_vault_variable_selector(&self.vault_addr.clone(), &"stableBorrowingRateFactor".to_string()),
+            get_vault_variable_selector(&self.vault_addr.clone(), &"totalTokenWeight".to_string()),
         ];
         let results = self.chain.execute_multicall(calls, include_str!("../../abi/vault.json").to_string(), "mintBurnFeeBasisPoints").await.expect("Failed to fetch vault state");
         if let [
@@ -110,7 +137,8 @@ impl Vault {
             liquidation_fee_usd,
             borrowing_rate_interval,
             borrowing_rate_factor,
-            stable_borrowing_rate_factor
+            stable_borrowing_rate_factor,
+            total_token_weights
         ] = results.as_slice() {
             self.state.mint_burn_fee_basis_points = mint_burn_fee_basis_points[0].clone().into_uint().expect("Failed to parse mint_burn_fee_basis_points");
             self.state.swap_fee_basis_points = swap_fee_basis_points[0].clone().into_uint().expect("Failed to parse swap_fee_basis_points");
@@ -125,6 +153,7 @@ impl Vault {
             self.state.borrowing_rate_interval = Duration::from_secs(borrowing_rate_interval[0].clone().into_uint().expect("Failed to parse borrowing_rate_interval").as_u64());
             self.state.borrowing_rate_factor = borrowing_rate_factor[0].clone().into_uint().expect("Failed to parse borrowing_rate_factor");
             self.state.stable_borrowing_rate_factor = stable_borrowing_rate_factor[0].clone().into_uint().expect("Failed to parse stable_borrowing_rate_factor");
+            self.state.total_token_weights = total_token_weights[0].clone().into_uint().expect("Failed to parse total_token_weights");
         }else{
             anyhow::bail!("Invalid vault state return data (may be invalid ABI), check Vault smart contract");
         }
@@ -246,7 +275,7 @@ mod tests {
             rpc_urls: vec!["https://data-seed-prebsc-1-s1.binance.org:8545/".to_string()],
             multicall_address: "0x6e5bb1a5ad6f68a8d7d6a5e47750ec15773d6042".to_string(),
         };
-        return Vault::new(&"0xF55Fc8e91c0c893568dB750cD4a4eB2D953E80a5".to_string(), &"0xDF49C2d458892B681331F4EEC0d09A88b283f444".to_string(), &"0x792bA5e9E0Cd15083Ec2f58E434d875892005b91".to_string(), &chain);
+        return Vault::new(&"0x3e6fb757447d34347AD940E0E789d976a1cf3842".to_string(), &"0xDF49C2d458892B681331F4EEC0d09A88b283f444".to_string(), &"0x792bA5e9E0Cd15083Ec2f58E434d875892005b91".to_string(), &chain);
     }
 
     #[test]
@@ -285,6 +314,22 @@ mod tests {
         assert!(vault.state.mint_burn_fee_basis_points > U256::from(0));
         assert!(vault.state.swap_fee_basis_points > U256::from(0));
         assert!(vault.state.stable_tax_basis_points > U256::from(0));
+        // assert!(vault.state.fee_basis_points > 0);
+        // assert!(vault.state.tax_basis_points > 0);
+        assert!(vault.state.usdp_supply > U256::zero());
+        assert!(vault.state.total_token_weights > U256::zero());
+        assert!(vault.state.total_aum[0] > U256::zero());
+        assert!(vault.state.total_aum[1] > U256::zero());
+        assert!(vault.state.plp_supply > U256::zero());
+        assert!(vault.state.mint_burn_fee_basis_points > U256::zero());
+        assert!(vault.state.swap_fee_basis_points > U256::zero());
+        assert!(vault.state.stable_swap_fee_basis_points > U256::zero());
+        assert!(vault.state.margin_fee_basis_points > U256::zero());
+        assert!(vault.state.stable_tax_basis_points > U256::zero());
+        assert!(vault.state.liquidation_fee_usd > U256::zero());
+        assert!(vault.state.borrowing_rate_factor > U256::zero());
+        assert!(vault.state.stable_borrowing_rate_factor > U256::zero());
+
     }
 
 
