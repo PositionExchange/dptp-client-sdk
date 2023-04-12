@@ -1,12 +1,13 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::{fs, env};
 use std::path::PathBuf;
 use crate::contracts::token::Token;
 use crate::contracts::multicall::Multicall;
 use crate::contracts::global_fetch::GlobalFetch;
+use wasm_bindgen::prelude::*;
 
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
     pub selected_account: Option<String>,
     pub chain: Chain,
@@ -14,16 +15,18 @@ pub struct Config {
     pub contract_address: ContractAddress
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Chain {
     pub chain_id: u64,
     pub rpc_urls: Vec<String>,
     pub multicall_address: String,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ContractAddress {
     pub vault: String,
+    pub plp_manager: String,
+    pub plp_token: String,
 }
 
 impl Config {

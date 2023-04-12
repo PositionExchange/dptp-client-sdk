@@ -13,24 +13,29 @@ abigen!(
     "./abi/multicall.json",
 );
 
-#[async_trait]
+#[async_trait(?Send)]
 pub trait ChainMulticallTrait {
     //! execute multicall
     //! pass calls to multicall contract
     //! pass the interface and function name to decode the return data
     async fn execute_multicall(&self, calls: Vec<(Address, Bytes)>, interface: String, fn_name: &str) -> Result<Vec<Vec<ethabi::Token>>, String>;
+    async fn execute_multicall_raw(&self, calls: Vec<(Address, Bytes)>) -> Result<Vec<Bytes>, String>;
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl ChainMulticallTrait for Chain {
     async fn execute_multicall(&self, calls: Vec<(Address, Bytes)>, interface: String, fn_name: &str) -> Result<Vec<Vec<ethabi::Token>>, String>{
+        let return_data = self.execute_multicall_raw(calls).await;
+        // convert return data to type
+        Ok(decode_return_data(return_data.unwrap(), interface.clone(), fn_name))
+    }
+    async fn execute_multicall_raw(&self, calls: Vec<(Address, Bytes)>) -> Result<Vec<Bytes>, String>{
         let provider = Provider::<Http>::try_from(self.rpc_urls[0].clone()).expect("invalid rpc url, check your config");
         let client = Arc::new(provider.clone());
         let address: Address = self.multicall_address.parse().expect("invalid multicall address, check your config");
         let multicall = Multicall::new(address, client);
-        let (_block_number, return_data) = multicall.aggregate(calls).call().await.expect("failed to execute multicall");
-        // convert return data to type
-        Ok(decode_return_data(return_data, interface, fn_name))
+        let (_block_number, return_data) = multicall.aggregate(calls).call().await.expect("Failed to execute multicall");
+        Ok(return_data)
     }
 }
 

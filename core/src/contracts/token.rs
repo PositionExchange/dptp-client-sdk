@@ -2,15 +2,36 @@ use std::collections::HashMap;
 use ethers::{types::Bytes};
 use ethabi::{ethereum_types::Address, ethereum_types::U256, Contract};
 use std::str::FromStr;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use rust_decimal::prelude::Decimal;
 
-#[derive(Debug, Deserialize, Clone)]
+const PRICE_DECIMALS: u32 = 30;
+
+#[derive(Debug, Copy, Deserialize, Serialize, Clone, Default, PartialEq, PartialOrd)]
+pub struct Price {
+    pub raw: U256,
+    pub parsed: Decimal
+}
+
+impl Price {
+    pub fn new_from_eth_token(raw: &ethabi::Token) -> Self {
+        let u256_price = raw.clone().into_uint().expect("Failed to parse price");
+        let parsed_price = Decimal::from_str(&ethers::utils::format_units(u256_price, PRICE_DECIMALS).expect("failed to pare ether units")).unwrap();
+        Price { raw: u256_price, parsed: parsed_price }
+    }
+    pub fn is_zero(&self) -> bool {
+        self.raw.is_zero()
+    }
+}
+
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Token {
     pub chain_id: Option<u64>,
     pub address: String,
     pub name: String,
     pub symbol: String,
+    pub logo_url : String,
     pub decimals: u8,
     // get from Vault.tokenConfigurations(address token) function
     pub token_weight: Option<u64>,
@@ -23,26 +44,31 @@ pub struct Token {
     pub is_native_token: Option<bool>,
 
     // prices
-    pub ask_price: Option<Decimal>,
-    pub bid_price: Option<Decimal>,
+    pub ask_price: Option<Price>,
+    pub bid_price: Option<Price>,
+    pub min_price: Option<Price>,
+    pub max_price: Option<Price>,
 
     pub buy_plp_fees: Option<Decimal>,
     pub sell_plp_fees: Option<Decimal>,
 
     pub total_liquidity: Option<Decimal>,
     pub available_liquidity: Option<Decimal>,
+    pub usdp_amount: Option<U256>,
+    
 
     pub allowances: Option<HashMap<Address, U256>>,
     pub balances: Option<HashMap<Address, Decimal>>,
 }
 
 impl Token {
-    pub fn new(chain_id: u64, address: &str, name: &str, symbol: &str, decimals: u8) -> Self {
+    pub fn new(chain_id: u64, address: &str, name: &str, symbol: &str, decimals: u8, logo_url : &str) -> Self {
         Self {
             chain_id: Some(chain_id),
             address: address.to_string(),
             name: name.to_string(),
             symbol: symbol.to_string(),
+            logo_url : logo_url.to_string(),
             decimals,
             token_weight: None,
             is_whitelisted: None,
@@ -54,6 +80,8 @@ impl Token {
 
             ask_price: None,
             bid_price: None,
+            min_price: None,
+            max_price: None,
 
             allowances: None,
             balances: None,
@@ -61,6 +89,7 @@ impl Token {
             sell_plp_fees: None,
             total_liquidity: None,
             available_liquidity: None,
+            usdp_amount: None
         }
     }
     pub fn build_balance_of_call(&self, account: &String) -> (Address, Bytes) {
@@ -188,7 +217,7 @@ mod tests {
     use super::*;
 
     fn create_mock_token() -> Token {
-        Token::new(97, "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984", "Uniswap", "UNI", 18)
+        Token::new(97, "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984", "Uniswap", "UNI", 18, "")
     }
 
     #[test]
