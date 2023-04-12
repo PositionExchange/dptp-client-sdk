@@ -1,5 +1,5 @@
 pub mod config;
-mod contracts;
+pub mod contracts;
 use async_trait::async_trait;
 use contracts::vault::Vault;
 // use futures::try_join;
@@ -8,6 +8,7 @@ use std::{sync::{Arc, Mutex}};
 
 use crate::contracts::token::Token;
 use contracts::global_fetch::*;
+// use contracts::vault_logic;
 
 #[derive(Debug)]
 pub struct Router {
@@ -42,6 +43,28 @@ impl RouterTrait for Router {
             vault: Vault::default()
         }
     }
+
+    fn initilize(&mut self,chain_id:u64) -> Result<&config::Config, &'static str>  {
+        self.config = config::load_config(chain_id).unwrap();
+        let contract_address = self.config.contract_address.clone();
+        self.vault = Vault::new(
+            &contract_address.vault,
+            &contract_address.plp_manager,
+            &contract_address.plp_token,
+            &self.config.chain
+        );
+
+        Ok(&self.config)
+    }
+
+    fn load_tokens(&self) -> Vec<Token>  {
+        self.config.tokens.clone()
+    }
+
+    fn set_account(&mut self, account:String) {
+        self.config.set_selected_account(account);
+    }
+
 
     async fn fetch_data(&mut self) -> anyhow::Result<()> {
         // let vault = Vault::new(
@@ -88,28 +111,6 @@ impl RouterTrait for Router {
         // let fetch_token_price_task = tokio::spawn(vault.fetch_token_prices(&mut tokens));
         // tokio::try_join!(fetch_token_task, fetch_token_price_task, fetch_account_balance)?;
         Ok(())
-    }
-
-    fn initilize(&mut self,chain_id:u64) -> Result<&config::Config, &'static str>  {
-        self.config = config::load_config(chain_id).unwrap();
-        let contract_address = self.config.contract_address.clone();
-        self.vault = Vault::new(
-            &contract_address.vault,
-            &contract_address.plp_manager,
-            &contract_address.plp_token,
-            &self.config.chain
-        );
-        
-        Ok(&self.config)
-    }
-
-    fn load_tokens(&self) -> Vec<Token>  {
-        self.config.tokens.clone()
-    }
-
-
-    fn set_account(&mut self, account:String) {
-        self.config.set_selected_account(account);
     }
 }
 

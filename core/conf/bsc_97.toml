@@ -8,6 +8,14 @@ vault="0x3e6fb757447d34347AD940E0E789d976a1cf3842"
 plp_manager="0xDF49C2d458892B681331F4EEC0d09A88b283f444"
 plp_token="0x792bA5e9E0Cd15083Ec2f58E434d875892005b91"
 
+[[tokens]]
+chain_id = 97
+address = "0x542E4676238562b518B968a1d03626d544a7BCA2"
+symbol = "POSI"
+decimals = 18
+name = "Position Exchange"
+is_whitlisted = true
+logo_url = "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x5CA42204cDaa70d5c773946e69dE942b85CA6706/logo.png"
 
 [[tokens]]
 chain_id = 97
@@ -16,6 +24,7 @@ symbol = "USDT"
 decimals = 18
 name = "USDT"
 is_whitlisted = true
+logo_url = "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png"
 
 [[tokens]]
 chain_id = 97
@@ -24,4 +33,5 @@ symbol = "BTC"
 decimals = 18
 name = "BTC"
 is_whitelisted = true
+logo_url = ""
 

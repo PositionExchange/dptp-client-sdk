@@ -33,7 +33,7 @@ pub trait VaultLogic {
         // plp_price: &U256,
         // usdp_supply: &U256,
         // total_token_weights: &U256,
-    ) -> (U256, u32);
+    ) -> (U256, u64);
     fn get_sell_glp_from_amount(
         &self,
         to_amount: U256,
@@ -84,7 +84,7 @@ impl VaultLogic for VaultState  {
         // plp_price: &U256,
         // usdp_supply: &U256,
         // total_token_weights: &U256,
-    ) -> (U256, u32) {
+    ) -> (U256, u64) {
         get_buy_glp_to_amount(from_amount, pay_token, &self.get_plp_price(true), &self.usdp_supply, &self.total_token_weights)
     }
 
@@ -152,7 +152,7 @@ fn get_buy_glp_to_amount(
     plp_price: &U256,
     usdp_supply: &U256,
     total_token_weights: &U256,
-) -> (U256, u32) {
+) -> (U256, u64) {
     let default_value = (U256::zero(), 0);
     if from_amount.is_zero()
         || plp_price.is_zero()
@@ -201,7 +201,7 @@ fn get_buy_glp_to_amount(
         .checked_div(*BASIS_POINTS_DIVISOR)
         .unwrap();
 
-    (glp_amount, fee_basis_points)
+    (glp_amount, fee_basis_points.into())
 }
 
 

@@ -1,8 +1,12 @@
 use wasm_bindgen::prelude::*;
 use serde_wasm_bindgen::{to_value, from_value};
+use serde::{Serialize, Deserialize};
 use core::{*};
 use std::sync::{Arc, Mutex};
 use console_error_panic_hook;
+use ethabi::ethereum_types::U256;
+use core::contracts::vault_logic::VaultLogic;
+use core::contracts::token::Token;
 
 #[wasm_bindgen]
 pub struct WasmRouter {
@@ -41,10 +45,12 @@ pub struct WasmRouter {
 //     }
 // }
 
+trait WasmRouterTrait {}
+
 #[wasm_bindgen]
 impl WasmRouter {
     #[wasm_bindgen(constructor)]
-    pub fn new(chain_id : u64) -> Self {
+    pub fn new(chain_id: u64) -> Self {
         let mut router = Router::new();
 
 
@@ -87,7 +93,102 @@ impl WasmRouter {
         let vault_state = self.router.vault.state;
         to_value(&vault_state).unwrap()
     }
+
+    pub fn get_buy_glp_from_amount(&mut self, to_amount: u64, token_address: &str) -> JsValue {
+        let token = WasmRouter::find_token_by_address(self, token_address);
+        if !token.is_some() {
+            let (amount_out, fee_basis_point) = self.router.vault.state.get_buy_glp_from_amount(U256::from(to_amount), token.unwrap());
+            let buy_glp = GetAmountOut {
+                amount_out,
+                fee_basis_point,
+            };
+            to_value(&buy_glp).unwrap()
+        } else {
+            to_value(&{}).unwrap()
+        }
+    }
+
+    pub fn get_buy_glp_to_amount(&mut self, to_amount: u64, token_address: &str) -> JsValue {
+        let token = WasmRouter::find_token_by_address(self, token_address);
+        if !token.is_some() {
+            let (glp_amount, fee_basis_point) = self.router.vault.state.get_buy_glp_to_amount(&U256::from(to_amount), token.unwrap());
+            let buy_glp = GetAmountOut {
+                amount_out: glp_amount,
+                fee_basis_point,
+            };
+            to_value(&buy_glp).unwrap()
+        } else {
+            to_value(&{}).unwrap()
+        }
+    }
+
+    pub fn get_sell_glp_to_amount(&mut self, to_amount: u64, token_address: &str) -> JsValue {
+        let token = WasmRouter::find_token_by_address(self, token_address);
+        if !token.is_some() {
+            let (amount_out, fee_basis_point) = self.router.vault.state.get_sell_glp_to_amount(U256::from(to_amount), token.unwrap());
+            let sell_glp = GetAmountOut {
+                amount_out,
+                fee_basis_point,
+            };
+            to_value(&sell_glp).unwrap()
+        } else {
+            to_value(&{}).unwrap()
+        }
+    }
+
+    pub fn get_sell_glp_from_amount(&mut self, to_amount: u16, token_address: &str) -> JsValue {
+        let token = WasmRouter::find_token_by_address(self, token_address);
+        if !token.is_some() {
+            let (amount_out, fee_basis_point) = self.router.vault.state.get_sell_glp_from_amount(U256::from(to_amount), token.unwrap());
+            let sell_glp = GetAmountOut {
+                amount_out,
+                fee_basis_point,
+            };
+            to_value(&sell_glp).unwrap()
+        } else {
+            to_value(&{}).unwrap()
+        }
+    }
+
+    pub fn get_fee_basis_points(&mut self,
+                                token_weight: u64,
+                                token_usdg_amount: u64,
+                                usdp_delta: u64,
+                                increment: bool, ) -> JsValue {
+        let fee_basis_point = self.router.vault.state.get_fee_basis_points(
+            token_weight,
+            &U256::from(token_usdg_amount),
+            &U256::from(usdp_delta),
+            increment);
+        to_value(&fee_basis_point).unwrap()
+    }
+
+    pub fn get_plp_price(&mut self, is_buy: bool) -> JsValue {
+        to_value(&self.router.vault.state.get_plp_price(is_buy)).unwrap()
+    }
+
+    fn find_token_by_address(&self, token_address: &str) -> Option<&Token> {
+        let token: Option<&Token> = None;
+        for token_element in self.router.config.tokens.iter() {
+            if token_address == token_element.address {
+                return Some(&token_element);
+            }
+        }
+        return token;
+    }
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct GetAmountOut {
+    pub amount_out: U256,
+    pub fee_basis_point: u64,
+}
+
+// #[derive(Serialize, Deserialize)]
+// pub struct GetAmountOut {
+//     pub glp_amount: U256,
+//     pub fee_basis_point: u32,
+// }
 
 #[wasm_bindgen(start)]
 pub fn main() {
