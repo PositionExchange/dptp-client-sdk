@@ -102,6 +102,7 @@ impl WasmRouter {
         to_value(&vault_state).unwrap()
     }
 
+    // Buy GLP to token ( exact token to token)
     pub fn get_buy_glp_from_amount(&mut self, to_amount: u64, token_address: &str) -> JsValue {
         let token = WasmRouter::find_token_by_address(self, token_address);
         if !token.is_some() {
@@ -116,6 +117,7 @@ impl WasmRouter {
         }
     }
 
+    // Buy GLP to token ( token to exact token)
     pub fn get_buy_glp_to_amount(&mut self, to_amount: u64, token_address: &str) -> JsValue {
         let token = WasmRouter::find_token_by_address(self, token_address);
         if !token.is_some() {
@@ -130,6 +132,8 @@ impl WasmRouter {
         }
     }
 
+
+    // Sell GLP to token ( token to exact token)
     pub fn get_sell_glp_to_amount(&mut self, to_amount: u64, token_address: &str) -> JsValue {
         let token = WasmRouter::find_token_by_address(self, token_address);
         if !token.is_some() {
@@ -144,6 +148,7 @@ impl WasmRouter {
         }
     }
 
+    // Sell GLP from amount ( exact token to token)
     pub fn get_sell_glp_from_amount(&mut self, to_amount: u16, token_address: &str) -> JsValue {
         let token = WasmRouter::find_token_by_address(self, token_address);
         if !token.is_some() {

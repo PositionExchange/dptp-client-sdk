@@ -107,22 +107,36 @@ impl RouterTrait for Router {
                 println!("task 2 start");
                 let mut tokens = tokens.lock().await;
                 println!("task 2 start after lock");
-                self.vault.fetch_token_prices(&mut tokens).await;
-                // println!("task 2 done, time {}", startTime.elapsed().as_millis());
+                self.vault.fetch_vault_info(&mut tokens).await;
+                // println!("task 1 done, time: {}", startTime.elapsed().as_millis());
             },
             async {
                 println!("task 3 start");
                 let mut tokens = tokens.lock().await;
                 println!("task 3 start after lock");
+                self.vault.fetch_token_prices(&mut tokens).await;
+                // println!("task 2 done, time {}", startTime.elapsed().as_millis());
+            },
+            async {
+                println!("task 4 start");
+                let mut tokens = tokens.lock().await;
+                println!("task 4 start after lock");
                 self.config.fetch_balances(&mut tokens).await;
                 // println!("task 3 done, time {}", startTime.elapsed().as_millis());
             },
         ];
 
 
+
+
         // re assign new tokens
         self.config.tokens = tokens.lock().await.to_vec();
 
+
+
+        for token in self.config.tokens.iter_mut() {
+            token.calculate_available_liquidity();
+        };
         // let fetch_token_task = tokio::spawn(vault.fetch_token_configuration(&mut tokens));
         // let fetch_token_price_task = tokio::spawn(vault.fetch_token_prices(&mut tokens));
         // tokio::try_join!(fetch_token_task, fetch_token_price_task, fetch_account_balance)?;
@@ -171,10 +185,14 @@ mod tests {
         // println!("price plp buy {}", router.price_plp_buy.unwrap().as_u32());
         router.fetch_data().await.expect("fetch data failed");
 
+
         // println!(router.price_plp_sell.unwrap());
         let tokens = router.load_tokens();
 
         println!("Loaded tokens: {:?}", tokens);
+
+        println!( "available_liquidity {}", tokens[0].available_liquidity.unwrap().to_string());
+
 
         assert_eq!(tokens.len(), 4);
         assert_eq!(tokens[0].token_weight, Some(100));

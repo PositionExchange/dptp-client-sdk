@@ -165,65 +165,7 @@ fn get_target_usdg_amount(token_weight: u64, usdp_supply: &U256, total_token_wei
     Some(token_weight * usdp_supply / total_token_weights)
 }
 
-fn get_buy_glp_to_amount(
-    from_amount: &U256,
-    pay_token: &Token,
-    plp_price: &U256,
-    usdp_supply: &U256,
-    total_token_weights: &U256,
-    has_dynamic_fees: bool,
-) -> (U256, u64) {
-    let default_value = (U256::zero(), 0);
-    if from_amount.is_zero()
-        || plp_price.is_zero()
-        || usdp_supply.is_zero()
-        || total_token_weights.is_zero()
-    {
-        return default_value;
-    }
 
-    let min_price = pay_token.min_price.clone().expect("no min price").raw;
-
-    // let pay_token = get_token_info(info_tokens, swap_token_address);
-    if min_price.is_zero() {
-        return default_value;
-    }
-
-    let mut glp_amount = from_amount
-        .checked_mul(min_price)
-        .unwrap()
-        .checked_div(*plp_price)
-        .unwrap();
-    glp_amount = adjust_for_decimals(&glp_amount, pay_token.decimals.into(), USDP_DECIMALS);
-
-    let mut usdg_amount = from_amount
-        .checked_mul(min_price)
-        .unwrap()
-        .checked_div(*PRECISION)
-        .unwrap();
-    usdg_amount = adjust_for_decimals(&usdg_amount, pay_token.decimals.into(), USDP_DECIMALS);
-    const MINT_BURN_FEE_BASIS_POINTS: u32 = 10;
-    const TAX_BASIS_POINTS: u32 = 10;
-    let fee_basis_points = get_fee_basis_points(
-        pay_token.token_weight.unwrap(),
-        &pay_token.usdp_amount.unwrap(),
-        &usdg_amount,
-        MINT_BURN_FEE_BASIS_POINTS,
-        TAX_BASIS_POINTS,
-        true,
-        usdp_supply,
-        total_token_weights,
-        has_dynamic_fees,
-    );
-
-    glp_amount = glp_amount
-        .checked_mul(*BASIS_POINTS_DIVISOR - fee_basis_points)
-        .unwrap()
-        .checked_div(*BASIS_POINTS_DIVISOR)
-        .unwrap();
-
-    (glp_amount, fee_basis_points.into())
-}
 
 
 fn get_fee_basis_points(
@@ -296,6 +238,7 @@ fn expand_decimals(value: u32, decimals: u32) -> U256 {
     U256::from(value) * U256::from(10u32).pow(decimals.into())
 }
 
+// Sell PLP- token  (PLP) to exact token
 fn get_sell_glp_from_amount(
     to_amount: U256,
     swap_token: &Token,
@@ -345,6 +288,7 @@ fn get_sell_glp_from_amount(
 }
 
 
+// Buy PLP - token to exact token (PLP)
 pub fn get_buy_glp_from_amount(
     to_amount: U256,
     token: &Token,
@@ -378,6 +322,68 @@ pub fn get_buy_glp_from_amount(
     (from_amount, fee_basis_points.into())
 }
 
+// Buy PLP - exact token to token (PLP)
+fn get_buy_glp_to_amount(
+    from_amount: &U256,
+    pay_token: &Token,
+    plp_price: &U256,
+    usdp_supply: &U256,
+    total_token_weights: &U256,
+    has_dynamic_fees: bool,
+) -> (U256, u64) {
+    let default_value = (U256::zero(), 0);
+    if from_amount.is_zero()
+        || plp_price.is_zero()
+        || usdp_supply.is_zero()
+        || total_token_weights.is_zero()
+    {
+        return default_value;
+    }
+
+    let min_price = pay_token.min_price.clone().expect("no min price").raw;
+
+    // let pay_token = get_token_info(info_tokens, swap_token_address);
+    if min_price.is_zero() {
+        return default_value;
+    }
+
+    let mut glp_amount = from_amount
+        .checked_mul(min_price)
+        .unwrap()
+        .checked_div(*plp_price)
+        .unwrap();
+    glp_amount = adjust_for_decimals(&glp_amount, pay_token.decimals.into(), USDP_DECIMALS);
+
+    let mut usdg_amount = from_amount
+        .checked_mul(min_price)
+        .unwrap()
+        .checked_div(*PRECISION)
+        .unwrap();
+    usdg_amount = adjust_for_decimals(&usdg_amount, pay_token.decimals.into(), USDP_DECIMALS);
+    const MINT_BURN_FEE_BASIS_POINTS: u32 = 10;
+    const TAX_BASIS_POINTS: u32 = 10;
+    let fee_basis_points = get_fee_basis_points(
+        pay_token.token_weight.unwrap(),
+        &pay_token.usdp_amount.unwrap(),
+        &usdg_amount,
+        MINT_BURN_FEE_BASIS_POINTS,
+        TAX_BASIS_POINTS,
+        true,
+        usdp_supply,
+        total_token_weights,
+        has_dynamic_fees,
+    );
+
+    glp_amount = glp_amount
+        .checked_mul(*BASIS_POINTS_DIVISOR - fee_basis_points)
+        .unwrap()
+        .checked_div(*BASIS_POINTS_DIVISOR)
+        .unwrap();
+
+    (glp_amount, fee_basis_points.into())
+}
+
+// Sell PLP- exact token  (PLP) to token
 pub fn get_sell_glp_to_amount(
     to_amount: U256,
     from_token: &Token,

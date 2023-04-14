@@ -188,6 +188,38 @@ impl Vault {
         Ok(())
     }
 
+    pub async fn fetch_vault_info(&self, tokens: &mut Vec<Token>) -> anyhow::Result<()> {
+
+        let calls: Vec<(Address, Bytes)> = tokens.iter().map(|token| {
+            let (vault_addr, data) = token.build_get_vault_info(&self.vault_addr);
+            (vault_addr, data)
+        }).collect();
+
+
+        let results = self.chain.execute_multicall(calls, include_str!("../../abi/vault.json").to_string(), "vaultInfo").await.expect("[Vault] Failed to fetch vault info");
+        println!("data result {:?}", results);
+
+        for (token, result) in tokens.iter_mut().zip(results) {
+            println!("result {:?}", result);
+            println!("result slice {:?}", result.as_slice());
+            if let [
+                feeReserves,
+                usdpAmounts,
+                poolAmounts,
+                reservedAmounts] = result.as_slice() {
+                token.update_vault_info(
+                    usdpAmounts.clone().into_uint().expect("Fail to parse usdp amount"),
+                    feeReserves.clone().into_uint().expect("Fail to parse feeReserves"),
+                    poolAmounts.clone().into_uint().expect("Fail to parse poolAmounts"),
+                    reservedAmounts.clone().into_uint().expect("Fail to parse reservedAmounts"),
+                );
+            } else {
+                anyhow::bail!("Invalid token configuration return data (may be invalid ABI), check vault.tokenConfigurations(address token) sm function");
+            }
+        }
+        Ok(())
+    }
+
     pub async fn fetch_token_prices(&self, tokens: &mut Vec<Token>) -> anyhow::Result<()> {
         // let mut tokens = tokens.lock().await;
         // fetch ask price
@@ -313,6 +345,23 @@ mod tests {
         assert_eq!(tokens[0].is_stable_token, Some(true));
         assert_eq!(tokens[1].token_weight, Some(100));
         assert_eq!(tokens[1].is_stable_token, Some(false));
+    }
+
+    #[tokio::test]
+    async fn test_fetch_vault_info() {
+        let vault = create_vault();
+        let mut tokens = create_tokens();
+        println!("len {} ", tokens.len());
+
+        let result = vault.fetch_token_configuration(&mut tokens).await;
+        let result = vault.fetch_vault_info(&mut tokens).await;
+        assert_eq!(tokens[0].usdp_amount, Some(U256::zero()));
+        assert_eq!(tokens[0].reserved_amounts, Some(U256::zero()));
+        assert_eq!(tokens[0].pool_amounts, Some(U256::zero()));
+        assert_eq!(tokens[0].fee_reserves, Some(U256::zero()));
+
+
+        assert!(result.is_ok());
     }
 
     #[tokio::test]
