@@ -72,6 +72,13 @@ impl WasmRouter {
         let tokens = self.router.load_tokens();
         to_value(&tokens).unwrap()
     }
+    //
+    // pub fn load_tokens_string(&self) -> String {
+    //     let tokens = self.router.load_tokens();
+    //
+    //     return serde_json::to_string(&tokens).unwrap()
+    //     // to_value(&tokens).unwrap()
+    // }
 
     pub fn set_account(&mut self, account: String) {
         self.router.set_account(account);

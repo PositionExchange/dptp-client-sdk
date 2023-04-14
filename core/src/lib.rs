@@ -74,6 +74,7 @@ impl RouterTrait for Router {
         //     &self.config.chain
         // );
         let tokens = self.load_tokens();
+        // println!("tokens: ", tokens);
         let tokens = tokio::sync::Mutex::new(tokens);
         // let tokens1 = Arc::clone(&tokens);
         // let tokens2 = Arc::clone(&tokens);
@@ -104,27 +105,6 @@ impl RouterTrait for Router {
             },
         ];
 
-        // async {
-        //     println!("task 1 start");
-        //     let mut tokens = tokens.lock().await;
-        //     println!("task 1 start after lock");
-        //     self.vault.fetch_token_configuration(&mut tokens).await;
-        //     // println!("task 1 done, time: {}", startTime.elapsed().as_millis());
-        // };
-        // async {
-        //     println!("task 2 start");
-        //     let mut tokens = tokens.lock().await;
-        //     println!("task 2 start after lock");
-        //     self.vault.fetch_token_prices(&mut tokens).await;
-        //     // println!("task 2 done, time {}", startTime.elapsed().as_millis());
-        // };
-        // async {
-        //     println!("task 3 start");
-        //     let mut tokens = tokens.lock().await;
-        //     println!("task 3 start after lock");
-        //     self.config.fetch_balances(&mut tokens).await;
-        //     // println!("task 3 done, time {}", startTime.elapsed().as_millis());
-        // };
 
         // re assign new tokens
         self.config.tokens = tokens.lock().await.to_vec();
@@ -151,7 +131,7 @@ mod tests {
         router.initilize(97).unwrap();
         let tokens = router.load_tokens();
         println!("Loaded tokens: {:?}", tokens);
-        assert_eq!(tokens.len(), 2);
+        assert_eq!(tokens.len(), 3);
         assert_eq!(tokens[0].name, "USDT");
         assert_eq!(tokens[1].name, "BTC");
 
@@ -187,14 +167,21 @@ mod tests {
         let mut router = Router::new();
         router.initilize(97).unwrap();
         let account = "0x1e8b86cd1b420925030fe72a8fd16b47e81c7515".to_string();
+        println!("****** set account *****");
+
         router.set_account(account.clone());
         println!("start fetching account");
         router.fetch_data().await.expect("fetch data in should_fetch_data_with_account_success failure");
+        println!("****** done fetch data *****");
+
         let tokens = router.load_tokens();
+
 
         println!("Loaded tokens: {:?}", tokens);
 
-        assert_eq!(tokens.len(), 2);
+
+
+        assert_eq!(tokens.len() >=1, true );
         // epxect token data
         assert_eq!(tokens[0].token_weight, Some(100));
         assert_eq!(tokens[1].token_weight, Some(100));

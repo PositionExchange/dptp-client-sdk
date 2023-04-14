@@ -36,6 +36,7 @@ pub struct Token {
     // get from Vault.tokenConfigurations(address token) function
     pub token_weight: Option<u64>,
     pub is_whitelisted: Option<bool>,
+    pub is_tradeable: Option<bool>,
     pub is_stable_token: Option<bool>,
     pub is_shortable_token: Option<bool>,
     pub min_profit_basis_points: Option<u64>,
@@ -72,6 +73,7 @@ impl Token {
             decimals,
             token_weight: None,
             is_whitelisted: None,
+            is_tradeable: None,
             is_stable_token: None,
             is_shortable_token: None,
             min_profit_basis_points: None,
@@ -137,7 +139,6 @@ impl Token {
         let function = contract.function(function_name).unwrap();
         let data: Bytes = function.encode_input(&[ethabi::Token::Address(self.get_parsed_address())]).unwrap().into();
         (address, data)
-
     }
 
     pub fn update_token_configuration(
