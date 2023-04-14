@@ -1,4 +1,3 @@
-
 use ethabi::ethereum_types::U256;
 use rust_decimal::Decimal;
 
@@ -62,7 +61,7 @@ pub trait VaultLogic {
 }
 
 
-impl VaultLogic for VaultState  {
+impl VaultLogic for VaultState {
     fn get_fee_basis_points(
         &self,
         token_weight: u64,
@@ -74,7 +73,16 @@ impl VaultLogic for VaultState  {
         // usdp_supply: &U256,
         // total_token_weights: &U256,
     ) -> u32 {
-        get_fee_basis_points(token_weight, token_usdg_amount, usdp_delta, self.fee_basis_points, self.tax_basis_points, increment, &self.usdp_supply, &self.total_token_weights)
+        get_fee_basis_points(
+            token_weight,
+            token_usdg_amount,
+            usdp_delta,
+            self.mint_burn_fee_basis_points.as_u32(),
+            self.tax_basis_points, increment,
+            &self.usdp_supply,
+            &self.total_token_weights,
+            self.has_dynamic_fees,
+        )
     }
 
     fn get_buy_glp_to_amount(
@@ -85,7 +93,13 @@ impl VaultLogic for VaultState  {
         // usdp_supply: &U256,
         // total_token_weights: &U256,
     ) -> (U256, u64) {
-        get_buy_glp_to_amount(from_amount, pay_token, &self.get_plp_price(true), &self.usdp_supply, &self.total_token_weights)
+        get_buy_glp_to_amount(
+            from_amount,
+            pay_token,
+            &self.get_plp_price(true),
+            &self.usdp_supply,
+            &self.total_token_weights,
+            self.has_dynamic_fees)
     }
 
     fn get_sell_glp_from_amount(
@@ -96,7 +110,7 @@ impl VaultLogic for VaultState  {
         // usdp_supply: U256,
         // total_token_weights: U256,
     ) -> (U256, u64) {
-        get_sell_glp_to_amount(to_amount, from_token, self.get_plp_price(false), self.usdp_supply, self.total_token_weights)
+        get_sell_glp_to_amount(to_amount, from_token, self.get_plp_price(false), self.usdp_supply, self.total_token_weights, self.has_dynamic_fees)
     }
 
     fn get_buy_glp_from_amount(
@@ -107,7 +121,7 @@ impl VaultLogic for VaultState  {
         // usdp_supply: U256,
         // total_token_weights: U256,
     ) -> (U256, u64) {
-        get_buy_glp_from_amount(to_amount, token, self.get_plp_price(true), self.usdp_supply, self.total_token_weights)
+        get_buy_glp_from_amount(to_amount, token, self.get_plp_price(true), self.usdp_supply, self.total_token_weights, self.has_dynamic_fees)
     }
 
     fn get_sell_glp_to_amount(
@@ -118,20 +132,25 @@ impl VaultLogic for VaultState  {
         // usdp_supply: U256,
         // total_token_weights: U256,
     ) -> (U256, u64) {
-        get_sell_glp_to_amount(to_amount, from_token, self.get_plp_price(false), self.usdp_supply, self.total_token_weights)
+        get_sell_glp_to_amount(
+            to_amount,
+            from_token,
+            self.get_plp_price(false),
+            self.usdp_supply,
+            self.total_token_weights,
+            self.has_dynamic_fees,
+        )
     }
 
     fn get_plp_price(&self, is_buy: bool) -> U256 {
-        let aum = if is_buy {self.total_aum[0]} else {self.total_aum[1]};
+        let aum = if is_buy { self.total_aum[0] } else { self.total_aum[1] };
         if self.usdp_supply.eq(&U256::from(0)) {
             return U256::from(0);
-        }
-        else{
-            aum / self.plp_supply
+        } else {
+            (aum * expand_decimals(1, 18) ) / (self.plp_supply * expand_decimals(1, 12))
         }
     }
 }
-
 
 fn adjust_for_decimals(amount: &U256, div_decimals: u32, mul_decimals: u32) -> U256 {
     amount * expand_decimals(1, mul_decimals) / expand_decimals(1, div_decimals)
@@ -152,6 +171,7 @@ fn get_buy_glp_to_amount(
     plp_price: &U256,
     usdp_supply: &U256,
     total_token_weights: &U256,
+    has_dynamic_fees: bool,
 ) -> (U256, u64) {
     let default_value = (U256::zero(), 0);
     if from_amount.is_zero()
@@ -192,7 +212,8 @@ fn get_buy_glp_to_amount(
         TAX_BASIS_POINTS,
         true,
         usdp_supply,
-        total_token_weights
+        total_token_weights,
+        has_dynamic_fees,
     );
 
     glp_amount = glp_amount
@@ -205,7 +226,6 @@ fn get_buy_glp_to_amount(
 }
 
 
-
 fn get_fee_basis_points(
     token_weight: u64,
     token_usdg_amount: &U256,
@@ -215,9 +235,14 @@ fn get_fee_basis_points(
     increment: bool,
     usdp_supply: &U256,
     total_token_weights: &U256,
+    has_dynamic_fees: bool,
 ) -> u32 {
     if token_usdg_amount.is_zero() || usdp_supply.is_zero() || total_token_weights.is_zero() {
         return 0;
+    }
+
+    if !has_dynamic_fees {
+        return fee_basis_points;
     }
 
     let fee_basis_points = U256::from(fee_basis_points);
@@ -277,6 +302,7 @@ fn get_sell_glp_from_amount(
     plp_price: U256,
     usdp_supply: U256,
     total_token_weights: U256,
+    has_dynamic_fees: bool,
 ) -> (U256, u64) {
     if to_amount == U256::zero()
         || usdp_supply == U256::zero()
@@ -310,6 +336,7 @@ fn get_sell_glp_from_amount(
         false,
         &usdp_supply,
         &total_token_weights,
+        has_dynamic_fees,
     );
 
     glp_amount = glp_amount * *BASIS_POINTS_DIVISOR / (*BASIS_POINTS_DIVISOR - fee_basis_points);
@@ -318,13 +345,13 @@ fn get_sell_glp_from_amount(
 }
 
 
-
 pub fn get_buy_glp_from_amount(
     to_amount: U256,
     token: &Token,
     plp_price: U256,
     usdp_supply: U256,
     total_token_weights: U256,
+    has_dynamic_fees: bool,
 ) -> (U256, u64) {
     let default_value = (U256::zero(), 0);
 
@@ -343,6 +370,7 @@ pub fn get_buy_glp_from_amount(
         true,
         &usdp_supply,
         &total_token_weights,
+        has_dynamic_fees,
     );
 
     from_amount = from_amount * *BASIS_POINTS_DIVISOR / (*BASIS_POINTS_DIVISOR - fee_basis_points);
@@ -356,6 +384,7 @@ pub fn get_sell_glp_to_amount(
     plp_price: U256,
     usdp_supply: U256,
     total_token_weights: U256,
+    has_dynamic_fees: bool,
 ) -> (U256, u64) {
     let default_value = (U256::zero(), 0);
 
@@ -379,6 +408,7 @@ pub fn get_sell_glp_to_amount(
         false,
         &new_usdg_supply,
         &total_token_weights,
+        has_dynamic_fees,
     );
 
     from_amount = from_amount * *BASIS_POINTS_DIVISOR / (*BASIS_POINTS_DIVISOR - fee_basis_points);

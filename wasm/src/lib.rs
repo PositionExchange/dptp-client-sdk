@@ -92,6 +92,7 @@ impl WasmRouter {
 
     pub async fn init_vault_state(&mut self) -> Result<(), JsValue> {
         self.router.vault.init_vault_state().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("init vault state failure");
+        self.router.calculate_price_plp();
         Ok(())
     }
 

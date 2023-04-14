@@ -8,12 +8,19 @@ use std::{sync::{Arc, Mutex}};
 
 use crate::contracts::token::Token;
 use contracts::global_fetch::*;
+use rust_decimal::prelude::Decimal;
+use crate::contracts::vault_logic::VaultLogic;
+use ethabi::{ethereum_types::U256};
+
+
 // use contracts::vault_logic;
 
 #[derive(Debug)]
 pub struct Router {
     pub config: config::Config,
     pub vault: Vault,
+    pub price_plp_buy : Option<U256>,
+    pub price_plp_sell : Option<U256>
 }
 
 #[async_trait(?Send)]
@@ -23,6 +30,7 @@ pub trait RouterTrait {
     fn load_tokens(&self) -> Vec<Token>;
     /// this function will init the account
     fn set_account(&mut self, account: String);
+    fn calculate_price_plp(&mut self);
     async fn fetch_data(&mut self) -> anyhow::Result<()>;
 }
 
@@ -40,11 +48,13 @@ impl RouterTrait for Router {
                 tokens: vec![],
                 contract_address: config::ContractAddress::default(),
             },
-            vault: Vault::default()
+            vault: Vault::default(),
+            price_plp_buy : None,
+            price_plp_sell : None,
         }
     }
 
-    fn initilize(&mut self,chain_id:u64) -> Result<&config::Config, &'static str>  {
+    fn initilize(&mut self, chain_id:u64) -> Result<&config::Config, &'static str>  {
         self.config = config::load_config(chain_id).unwrap();
         let contract_address = self.config.contract_address.clone();
         self.vault = Vault::new(
@@ -53,7 +63,6 @@ impl RouterTrait for Router {
             &contract_address.plp_token,
             &self.config.chain
         );
-
         Ok(&self.config)
     }
 
@@ -63,6 +72,11 @@ impl RouterTrait for Router {
 
     fn set_account(&mut self, account:String) {
         self.config.set_selected_account(account);
+    }
+
+    fn calculate_price_plp(&mut self) {
+        self.price_plp_buy= Option::from(self.vault.state.get_plp_price(true));
+        self.price_plp_sell = Option::from(self.vault.state.get_plp_price(false));
     }
 
 
@@ -152,12 +166,17 @@ mod tests {
     async fn should_fetch_data_without_account_success() {
         let mut router = Router::new();
         router.initilize(97).unwrap();
+        router.vault.init_vault_state().await.unwrap();
+        router.calculate_price_plp();
+        // println!("price plp buy {}", router.price_plp_buy.unwrap().as_u32());
         router.fetch_data().await.expect("fetch data failed");
+
+        // println!(router.price_plp_sell.unwrap());
         let tokens = router.load_tokens();
 
         println!("Loaded tokens: {:?}", tokens);
 
-        assert_eq!(tokens.len(), 2);
+        assert_eq!(tokens.len(), 4);
         assert_eq!(tokens[0].token_weight, Some(100));
         assert_eq!(tokens[1].token_weight, Some(100));
     }
