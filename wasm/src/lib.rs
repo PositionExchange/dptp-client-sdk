@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use wasm_bindgen::prelude::*;
 use serde_wasm_bindgen::{to_value, from_value};
 use serde::{Serialize, Deserialize};
@@ -61,6 +62,7 @@ impl WasmRouter {
         }
     }
 
+    #[wasm_bindgen]
     pub fn load_config(&mut self, chain_id: u64) -> Result<JsValue, JsValue> {
         match self.router.initilize(chain_id) {
             Ok(config) => Ok(to_value(config).unwrap()),
@@ -68,6 +70,7 @@ impl WasmRouter {
         }
     }
 
+    #[wasm_bindgen]
     pub fn load_tokens(&self) -> JsValue {
         let tokens = self.router.load_tokens();
         to_value(&tokens).unwrap()
@@ -80,16 +83,19 @@ impl WasmRouter {
     //     // to_value(&tokens).unwrap()
     // }
 
+    #[wasm_bindgen]
     pub fn set_account(&mut self, account: String) {
         self.router.set_account(account);
     }
 
 
+    #[wasm_bindgen]
     pub async fn fetch_data(&mut self) -> Result<(), JsValue> {
-        self.router.fetch_data().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("featch data failure");
+        self.router.fetch_data().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("fetch data failure");
         Ok(())
     }
 
+    #[wasm_bindgen]
     pub async fn init_vault_state(&mut self) -> Result<(), JsValue> {
         self.router.vault.init_vault_state().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("init vault state failure");
         self.router.calculate_price_plp();
@@ -97,16 +103,18 @@ impl WasmRouter {
     }
 
     // Note: Need to call init_vault_state first
+    #[wasm_bindgen]
     pub fn get_vault_state(&mut self) -> JsValue {
         let vault_state = self.router.vault.state;
         to_value(&vault_state).unwrap()
     }
 
     // Buy GLP to token ( exact token to token)
-    pub fn get_buy_glp_from_amount(&mut self, to_amount: u64, token_address: &str) -> JsValue {
+    #[wasm_bindgen]
+    pub fn get_buy_glp_from_amount(&mut self, to_amount: &str, token_address: &str) -> JsValue {
         let token = WasmRouter::find_token_by_address(self, token_address);
-        if !token.is_some() {
-            let (amount_out, fee_basis_point) = self.router.vault.state.get_buy_glp_from_amount(U256::from(to_amount), token.unwrap());
+        if token.is_some() {
+            let (amount_out, fee_basis_point) = self.router.vault.state.get_buy_glp_from_amount(U256::from_str(to_amount).unwrap(), token.unwrap());
             let buy_glp = GetAmountOut {
                 amount_out,
                 fee_basis_point,
@@ -118,26 +126,33 @@ impl WasmRouter {
     }
 
     // Buy GLP to token ( token to exact token)
-    pub fn get_buy_glp_to_amount(&mut self, to_amount: u64, token_address: &str) -> JsValue {
+    #[wasm_bindgen]
+    pub fn get_buy_glp_to_amount(&mut self, to_amount: &str, token_address: &str) -> JsValue {
         let token = WasmRouter::find_token_by_address(self, token_address);
-        if !token.is_some() {
-            let (glp_amount, fee_basis_point) = self.router.vault.state.get_buy_glp_to_amount(&U256::from(to_amount), token.unwrap());
+        if token.is_some() {
+            let (glp_amount, fee_basis_point) = self.router.vault.state.get_buy_glp_to_amount(&U256::from_str(to_amount).unwrap(), token.unwrap());
             let buy_glp = GetAmountOut {
                 amount_out: glp_amount,
                 fee_basis_point,
             };
             to_value(&buy_glp).unwrap()
         } else {
-            to_value(&{}).unwrap()
+            println!("not have token");
+            to_value(&GetAmountOut{
+                amount_out: U256::from(456),
+                fee_basis_point: 456,
+            }).unwrap()
+            // to_value(&{}).unwrap()
         }
     }
 
 
     // Sell GLP to token ( token to exact token)
-    pub fn get_sell_glp_to_amount(&mut self, to_amount: u64, token_address: &str) -> JsValue {
+    #[wasm_bindgen]
+    pub fn get_sell_glp_to_amount(&mut self, to_amount: &str, token_address: &str) -> JsValue {
         let token = WasmRouter::find_token_by_address(self, token_address);
-        if !token.is_some() {
-            let (amount_out, fee_basis_point) = self.router.vault.state.get_sell_glp_to_amount(U256::from(to_amount), token.unwrap());
+        if token.is_some() {
+            let (amount_out, fee_basis_point) = self.router.vault.state.get_sell_glp_to_amount(U256::from_str(to_amount).unwrap(), token.unwrap());
             let sell_glp = GetAmountOut {
                 amount_out,
                 fee_basis_point,
@@ -149,10 +164,11 @@ impl WasmRouter {
     }
 
     // Sell GLP from amount ( exact token to token)
-    pub fn get_sell_glp_from_amount(&mut self, to_amount: u16, token_address: &str) -> JsValue {
+    #[wasm_bindgen]
+    pub fn get_sell_glp_from_amount(&mut self, to_amount: &str, token_address: &str) -> JsValue {
         let token = WasmRouter::find_token_by_address(self, token_address);
-        if !token.is_some() {
-            let (amount_out, fee_basis_point) = self.router.vault.state.get_sell_glp_from_amount(U256::from(to_amount), token.unwrap());
+        if token.is_some() {
+            let (amount_out, fee_basis_point) = self.router.vault.state.get_sell_glp_from_amount(U256::from_str(to_amount).unwrap(), token.unwrap());
             let sell_glp = GetAmountOut {
                 amount_out,
                 fee_basis_point,
@@ -163,6 +179,7 @@ impl WasmRouter {
         }
     }
 
+    #[wasm_bindgen]
     pub fn get_fee_basis_points(&mut self,
                                 token_weight: u64,
                                 token_usdg_amount: u64,
@@ -176,9 +193,11 @@ impl WasmRouter {
         to_value(&fee_basis_point).unwrap()
     }
 
+    #[wasm_bindgen]
     pub fn get_plp_price(&mut self, is_buy: bool) -> JsValue {
         to_value(&self.router.vault.state.get_plp_price(is_buy)).unwrap()
     }
+
 
     fn find_token_by_address(&self, token_address: &str) -> Option<&Token> {
         let token: Option<&Token> = None;
@@ -201,6 +220,40 @@ pub struct GetAmountOut {
 // pub struct GetAmountOut {
 //     pub glp_amount: U256,
 //     pub fee_basis_point: u32,
+// }
+
+// #[cfg(test)]
+// mod tests {
+//     // use ethabi::ethereum_types::U256;
+//     // use core::Token;
+//     use crate::WasmRouter;
+//
+//     // fn create_tokens_wasm() -> Vec<Token> {
+//     //     let mut tokens = vec![
+//     //         Token::new(97, "0x542E4676238562b518B968a1d03626d544a7BCA2", "USDT", "USDT", 18, ""),
+//     //         Token::new(97, "0xc4900937c3222CA28Cd4b300Eb2575ee0868540F", "BTC", "BTC", 18, ""),
+//     //     ];
+//     //     tokens
+//     // }
+//
+//     #[test]
+//     fn test_buy_amount() {
+//
+//         let mut router = WasmRouter::new(97);
+//         // let mut tokens = create_tokens_wasm();
+//         // println!("len {} ", tokens.len());
+//         // router.initilize()
+//         // router.fetch_data().await.unwrap();
+//         // router.load_tokens().unwrap();
+//         // router.init_vault_state().unwrap();
+//         // router.fetch_vault_info().unwrap();
+//
+//         let result = router.get_buy_glp_to_amount(10000000000, "0x542E4676238562b518B968a1d03626d544a7BCA2" );
+//
+//         // println!("{}", result );
+//
+//     }
+//
 // }
 
 #[wasm_bindgen(start)]

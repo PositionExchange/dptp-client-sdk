@@ -302,6 +302,7 @@ fn encode_selector_and_params(function_signature: &str, params: &[ethabi::Token]
 #[cfg(test)]
 mod tests {
     use ethers::utils::hex;
+    use crate::contracts::vault_logic::VaultLogic;
 
     use super::*;
 
@@ -430,5 +431,21 @@ mod tests {
         let result = encode_selector_and_params(function_signature, &params);
         println!("{}", hex::encode(result.clone()));
         assert_eq!(hex::encode(result.clone()), "a9059cbb0000000000000000000000006e5bb1a5ad6f68a8d7d6a5e47750ec15773d60420000000000000000000000000000000000000000000000000000000000000064");
+    }
+
+    #[tokio::test]
+    async fn test_buy_plp_to_amount(){
+        let vault = create_vault();
+        let mut tokens = create_tokens();
+        println!("len {} ", tokens.len());
+
+        let result = vault.fetch_token_configuration(&mut tokens).await;
+        let result = vault.fetch_vault_info(&mut tokens).await;
+
+
+        let (result, fee) = vault.state.get_buy_glp_to_amount(&U256::from_dec_str("1000000000000000000").unwrap(), &tokens[0] );
+
+        println!("result {}", result);
+
     }
 }
