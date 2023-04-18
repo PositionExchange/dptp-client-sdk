@@ -26,7 +26,7 @@ use ethaddr::Address;
 
 #[wasm_bindgen]
 pub struct WasmRouter {
-    router: Mutex<Router>,
+    router: Router,
 }
 
 // Note: this is the example to custom export struct to js
@@ -68,9 +68,9 @@ impl WasmRouter {
     #[wasm_bindgen(constructor)]
     pub fn new(chain_id: u64) -> Self {
         init(wasm_logger::Config::default());
-        let mut router = Mutex::new(Router::new());
+        let mut router = Router::new();
 
-        router.lock().unwrap().initilize(chain_id).expect("load_config failed");
+        router.initilize(chain_id).expect("load_config failed");
         panic::set_hook(Box::new(console_error_panic_hook::hook));
 
         WasmRouter {
@@ -82,7 +82,7 @@ impl WasmRouter {
     pub fn load_config(&mut self, chain_id: u64) -> Result<JsValue, JsValue> {
         log::info!("start load_config");
 
-        match self.router.lock().unwrap().initilize(chain_id) {
+        match self.router.initilize(chain_id) {
             Ok(config) => Ok(to_value(config).unwrap()),
             Err(e) => Err(JsValue::from_str(e)),
         }
@@ -92,7 +92,7 @@ impl WasmRouter {
     pub fn load_tokens(&self) -> JsValue {
         log::info!("start load_tokens");
 
-        let tokens = self.router.lock().unwrap().load_tokens();
+        let tokens = self.router.load_tokens();
         log::info!("done load_tokens");
         return to_value(&tokens).unwrap();
 
@@ -109,7 +109,7 @@ impl WasmRouter {
     pub fn set_account(&mut self, account: String) {
         log::info!("start set_account");
 
-        self.router.lock().unwrap().set_account(account);
+        self.router.set_account(account);
         log::info!("done set_account");
 
     }
@@ -117,24 +117,19 @@ impl WasmRouter {
 
     #[wasm_bindgen]
     pub async fn fetch_async(&mut self, account: String) {
-        log::info!("start fetch_async");
 
         if Address::from_str_checksum(&account).is_ok() {
-            self.router.lock().unwrap().set_account(account);
+            self.router.set_account(account);
         }
-        self.router.lock().unwrap().fetch_data().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("fetch data failure");
-        self.router.lock().unwrap().vault.init_vault_state().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("init vault state failure");
-        self.router.lock().unwrap().calculate_price_plp();
-        log::info!("done fetch_async");
+        self.router.fetch_data().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("fetch data failure");
+        self.router.vault.init_vault_state().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("init vault state failure");
+        self.router.calculate_price_plp();
 
     }
 
     #[wasm_bindgen]
     pub async fn fetch_data(&mut self) -> Result<(), JsValue> {
-        log::info!("start fetch_data");
-
-        self.router.lock().unwrap().fetch_data().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("fetch data failure");
-        log::info!("done fetch_data");
+        self.router.fetch_data().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("fetch data failure");
         Ok(())
 
 
@@ -142,19 +137,15 @@ impl WasmRouter {
 
     #[wasm_bindgen]
     pub async fn init_vault_state(&mut self) -> Result<(), JsValue> {
-        log::info!("start init_vault_state");
-        self.router.lock().unwrap().vault.init_vault_state().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("init vault state failure");
-        self.router.lock().unwrap().calculate_price_plp();
-        log::info!("done init_vault_state");
+        self.router.vault.init_vault_state().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("init vault state failure");
+        self.router.calculate_price_plp();
         Ok(())
     }
 
     // Note: Need to call init_vault_state first
     #[wasm_bindgen]
     pub fn get_vault_state(&mut self) -> JsValue {
-        log::info!("start get_vault_state");
-        let vault_state = self.router.lock().unwrap().vault.state;
-        log::info!("done get_vault_state");
+        let vault_state = self.router.vault.state;
         to_value(&vault_state).unwrap()
     }
 
@@ -167,27 +158,32 @@ impl WasmRouter {
             fee_basis_point: 0
 
         };
-        // for token_element in self.router.lock().unwrap().config.tokens.iter_mut() {
-        //     let (glp_amount, fee_basis_point) = self.router.lock().unwrap().vault.state.get_buy_glp_from_amount(U256::from_str(to_amount).unwrap(), token_element);
-        //     token_element.buy_plp_fees = Some( Decimal::from(fee_basis_point));
-        //     if token_address == token_element.address {
-        //         buy_glp.amount_out = glp_amount;
-        //         buy_glp.fee_basis_point = fee_basis_point
-        //     }
-        // }
-        return to_value(&buy_glp).unwrap();
+        for token_element in self.router.config.tokens.iter_mut() {
+            if token_element.is_tradeable.unwrap() {
 
-        // let token = WasmRouter::find_token_by_address(self, token_address);
-        // if token.is_some() {
-        //     let (amount_out, fee_basis_point) = self.router.vault.state.get_buy_glp_from_amount(U256::from_str(to_amount).unwrap(), token.unwrap());
-        //     let buy_glp = GetAmountOut {
-        //         amount_out,
-        //         fee_basis_point,
-        //     };
-        //     to_value(&buy_glp).unwrap()
-        // } else {
-        //     to_value(&{}).unwrap()
-        // }
+                let token = token_element.clone();
+                let amount = U256::from_str(to_amount).unwrap();
+                let price =  self.router.price_plp_buy.clone();
+                let usdp_supply = self.router.vault.state.usdp_supply.clone();
+                let total_token_weights =  self.router.vault.state.total_token_weights.clone();
+                let has_dynamic_fees = self.router.vault.state.has_dynamic_fees.clone();
+
+                let (glp_amount, fee_basis_point) = vault_logic::get_buy_glp_from_amount(
+                    amount,
+                    &token,
+                    price,
+                    usdp_supply,
+                    total_token_weights,
+                    has_dynamic_fees
+                );
+                token_element.buy_plp_fees = Some( Decimal::from(fee_basis_point));
+                if token_address == token_element.address {
+                    buy_glp.amount_out = glp_amount;
+                    buy_glp.fee_basis_point = fee_basis_point
+                }
+            }
+        }
+        return to_value(&buy_glp).unwrap();
 
     }
 
@@ -195,41 +191,27 @@ impl WasmRouter {
     // Buy GLP to token ( token to exact token)
     #[wasm_bindgen]
     pub fn get_buy_glp_to_amount(&mut self, to_amount: &str, token_address: &str) -> JsValue {
-        log::info!("start get_buy_glp_to_amount  to_amount: {}, token_address: {}", to_amount, token_address);
         let mut buy_glp = GetAmountOut{
             amount_out : U256::from(0),
             fee_basis_point: 0
 
         };
-
-        let mut _router = self.router.lock().unwrap();
-
-        let  routerClone: &Router =  _router.deref();
         let mut count =0;
-        for token_element in routerClone.config.tokens.iter() {
-            // console::log!("token_element {}", count++ );
+        for token_element in self.router.config.tokens.iter_mut() {
 
-            count = count +1;
             if token_element.is_tradeable.unwrap() {
-                // log::info!("into is_tradeable ");
 
                 let token = token_element.clone();
-                // log::info!("token clone ");
 
                 let amount = U256::from_str(to_amount).unwrap();
-                // log::info!("amount clone ");
 
-                let price =  routerClone.price_plp_buy.clone();
-                // log::info!("price clone ");
+                let price =  self.router.price_plp_buy.clone();
 
-                let usdp_supply = routerClone.vault.state.usdp_supply.clone();
-                // log::info!("usdp_supply clone ");
+                let usdp_supply = self.router.vault.state.usdp_supply.clone();
 
-                let total_token_weights =  routerClone.vault.state.total_token_weights.clone();
-                // log::info!("total_token_weights clone ");
+                let total_token_weights =  self.router.vault.state.total_token_weights.clone();
 
-                let has_dynamic_fees = routerClone.vault.state.has_dynamic_fees.clone();
-                // log::info!("has_dynamic_fees clone ");
+                let has_dynamic_fees = self.router.vault.state.has_dynamic_fees.clone();
 
                 let (glp_amount, fee_basis_point) = vault_logic::get_buy_glp_to_amount(
                     &amount,
@@ -239,35 +221,15 @@ impl WasmRouter {
                     &total_token_weights,
                     has_dynamic_fees
                 );
-                log::info!("glp_amount fee_basis_point ");
-
-
-                // let (glp_amount, fee_basis_point) = self.router.lock().unwrap().vault.state.get_buy_glp_to_amount(&U256::from_str(to_amount).unwrap(), token_element);
-                // token_element.buy_plp_fees = Some( Decimal::from(fee_basis_point));
+                token_element.buy_plp_fees = Some( Decimal::from(fee_basis_point));
                 if token_address == token_element.address {
                     buy_glp.amount_out = glp_amount;
                     buy_glp.fee_basis_point = fee_basis_point
                 }
-            }else {
-                log::info!("not is_tradeable ");
-
             }
 
         }
         return to_value(&buy_glp).unwrap()
-
-        //
-        // let token = WasmRouter::find_token_by_address(self, token_address);
-        // if token.is_some() {
-        //     let (glp_amount, fee_basis_point) = self.router.vault.state.get_buy_glp_to_amount(&U256::from_str(to_amount).unwrap(), token.unwrap());
-        //     let buy_glp = GetAmountOut {
-        //         amount_out: glp_amount,
-        //         fee_basis_point,
-        //     };
-        //     to_value(&buy_glp).unwrap()
-        // } else {
-        //     to_value(&{}).unwrap()
-        // }
     }
 
 
@@ -280,26 +242,38 @@ impl WasmRouter {
             fee_basis_point: 0
 
         };
-        // for token_element in self.router.lock().unwrap().config.tokens.iter_mut() {
-        //     let (glp_amount, fee_basis_point) = self.router.lock().unwrap().vault.state.get_sell_glp_to_amount(U256::from_str(to_amount).unwrap(), token_element);
-        //     token_element.buy_plp_fees = Some( Decimal::from(fee_basis_point));
-        //     if token_address == token_element.address {
-        //         buy_glp.amount_out = glp_amount;
-        //         buy_glp.fee_basis_point = fee_basis_point
-        //     }
-        // }
+        for token_element in self.router.config.tokens.iter_mut() {
+            if token_element.is_tradeable.unwrap() {
+
+                let token = token_element.clone();
+
+                let amount = U256::from_str(to_amount).unwrap();
+
+                let price =  self.router.price_plp_buy.clone();
+
+                let usdp_supply = self.router.vault.state.usdp_supply.clone();
+
+                let total_token_weights =  self.router.vault.state.total_token_weights.clone();
+
+                let has_dynamic_fees = self.router.vault.state.has_dynamic_fees.clone();
+
+                let (glp_amount, fee_basis_point) = vault_logic::get_sell_glp_to_amount(
+                    amount,
+                    &token,
+                    price,
+                    usdp_supply,
+                    total_token_weights,
+                    has_dynamic_fees
+                );
+                token_element.buy_plp_fees = Some( Decimal::from(fee_basis_point));
+                if token_address == token_element.address {
+                    buy_glp.amount_out = glp_amount;
+                    buy_glp.fee_basis_point = fee_basis_point
+                }
+            }
+        }
         return to_value(&buy_glp).unwrap();
-        // let token = WasmRouter::find_token_by_address(self, token_address);
-        // if token.is_some() {
-        //     let (amount_out, fee_basis_point) = self.router.vault.state.get_sell_glp_to_amount(U256::from_str(to_amount).unwrap(), token.unwrap());
-        //     let sell_glp = GetAmountOut {
-        //         amount_out,
-        //         fee_basis_point,
-        //     };
-        //     to_value(&sell_glp).unwrap()
-        // } else {
-        //     to_value(&{}).unwrap()
-        // }
+
     }
 
     // Sell GLP from amount ( exact token to token)
@@ -310,27 +284,32 @@ impl WasmRouter {
             fee_basis_point: 0
 
         };
-        // for token_element in self.router.lock().unwrap().config.tokens.iter_mut() {
-        //     let (glp_amount, fee_basis_point) = self.router.lock().unwrap().vault.state.get_sell_glp_from_amount(U256::from_str(to_amount).unwrap(), token_element);
-        //     token_element.buy_plp_fees = Some( Decimal::from(fee_basis_point));
-        //     if token_address == token_element.address {
-        //         buy_glp.amount_out = glp_amount;
-        //         buy_glp.fee_basis_point = fee_basis_point
-        //     }
-        // }
-        return to_value(&buy_glp).unwrap();
-        // let token = WasmRouter::find_token_by_address(self, token_address);
-        // if token.is_some() {
-        //     let (amount_out, fee_basis_point) = self.router.vault.state.get_sell_glp_from_amount(U256::from_str(to_amount).unwrap(), token.unwrap());
-        //     let sell_glp = GetAmountOut {
-        //         amount_out,
-        //         fee_basis_point,
-        //     };
-        //     to_value(&sell_glp).unwrap()
-        // } else {
-        //     to_value(&{}).unwrap()
-        // }
+        for token_element in self.router.config.tokens.iter_mut() {
+            if token_element.is_tradeable.unwrap() {
 
+                let token = token_element.clone();
+                let amount = U256::from_str(to_amount).unwrap();
+                let price =  self.router.price_plp_buy.clone();
+                let usdp_supply = self.router.vault.state.usdp_supply.clone();
+                let total_token_weights =  self.router.vault.state.total_token_weights.clone();
+                let has_dynamic_fees = self.router.vault.state.has_dynamic_fees.clone();
+
+                let (glp_amount, fee_basis_point) = vault_logic::get_sell_glp_from_amount(
+                    amount,
+                    &token,
+                    price,
+                    usdp_supply,
+                    total_token_weights,
+                    has_dynamic_fees
+                );
+                token_element.buy_plp_fees = Some( Decimal::from(fee_basis_point));
+                if token_address == token_element.address {
+                    buy_glp.amount_out = glp_amount;
+                    buy_glp.fee_basis_point = fee_basis_point
+                }
+            }
+        }
+        return to_value(&buy_glp).unwrap();
     }
 
     #[wasm_bindgen]
@@ -339,7 +318,7 @@ impl WasmRouter {
                                 token_usdg_amount: u64,
                                 usdp_delta: u64,
                                 increment: bool, ) -> JsValue {
-        let fee_basis_point = self.router.lock().unwrap().vault.state.get_fee_basis_points(
+        let fee_basis_point = self.router.vault.state.get_fee_basis_points(
             token_weight,
             &U256::from(token_usdg_amount),
             &U256::from(usdp_delta),
@@ -349,19 +328,8 @@ impl WasmRouter {
 
     #[wasm_bindgen]
     pub fn get_plp_price(&mut self, is_buy: bool) -> JsValue {
-        to_value(&self.router.lock().unwrap().vault.state.get_plp_price(is_buy)).unwrap()
+        to_value(&self.router.vault.state.get_plp_price(is_buy)).unwrap()
     }
-
-    //
-    // fn find_token_by_address(&self, token_address: &str) -> Option<&Token> {
-    //     let token: Option<&Token> = None;
-    //     for token_element in self.router.config.tokens.iter() {
-    //         if token_address == token_element.address {
-    //             return Some(&token_element);
-    //         }
-    //     }
-    //     return token;
-    // }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -374,12 +342,6 @@ pub struct GetAmountOut {
 // pub struct FetchInOne {
 //     pub tokens: Vec<Token>,
 //     pub vault_state: contracts::vault::VaultState,
-// }
-
-// #[derive(Serialize, Deserialize)]
-// pub struct GetAmountOut {
-//     pub glp_amount: U256,
-//     pub fee_basis_point: u32,
 // }
 
 // #[cfg(test)]
