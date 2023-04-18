@@ -323,7 +323,7 @@ pub fn get_buy_glp_from_amount(
 }
 
 // Buy PLP - exact token to token (PLP)
-fn get_buy_glp_to_amount(
+pub fn get_buy_glp_to_amount(
     from_amount: &U256,
     pay_token: &Token,
     plp_price: &U256,
@@ -339,7 +339,7 @@ fn get_buy_glp_to_amount(
     {
         return default_value;
     }
-
+    //
     let min_price = pay_token.min_price.clone().expect("no min price").raw;
 
     // let pay_token = get_token_info(info_tokens, swap_token_address);
