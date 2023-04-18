@@ -239,7 +239,7 @@ fn expand_decimals(value: u32, decimals: u32) -> U256 {
 }
 
 // Sell PLP- token  (PLP) to exact token
-fn get_sell_glp_from_amount(
+pub fn get_sell_glp_from_amount(
     to_amount: U256,
     swap_token: &Token,
     plp_price: U256,
