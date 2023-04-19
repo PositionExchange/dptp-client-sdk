@@ -27,6 +27,7 @@ pub struct ContractAddress {
     pub vault: String,
     pub plp_manager: String,
     pub plp_token: String,
+    pub reward_router: String
 }
 
 impl Config {

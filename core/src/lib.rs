@@ -165,6 +165,8 @@ mod tests {
         // 2. set account
         router.set_account("0xaC7c1a2fFb8b3f3bEa3e6aB4bC8b1A2Ff4Bb4Aa4".to_string());
         assert_eq!(router.config.selected_account, Some("0xaC7c1a2fFb8b3f3bEa3e6aB4bC8b1A2Ff4Bb4Aa4".to_string()));
+
+        println!("reward_router {}", router.config.contract_address.reward_router);
     }
 
     #[test]
@@ -232,4 +234,23 @@ mod tests {
         // assert_eq!(tokens[0].get_allowance(&account), "0");
         // assert_eq!(tokens[1].get_allowance(&account), "0");
     }
+
+    #[tokio::test]
+    async fn test_buy (){
+        let mut router = Router::new();
+        router.initilize(97).unwrap();
+        router.vault.init_vault_state().await.unwrap();
+
+        router.calculate_price_plp();
+        // println!("price plp buy {}", router.price_plp_buy.unwrap().as_u32());
+        router.fetch_data().await.expect("fetch data failed");
+
+        let token  = router.load_tokens();
+        println!("&token[0]: {}",  &token[0].min_price.unwrap().parsed);
+        let (amount, fee) = router.vault.state.get_buy_glp_to_amount(
+            &U256::from_str("10000000000000000000").unwrap(),
+            &token[0] );
+
+    }
+
 }

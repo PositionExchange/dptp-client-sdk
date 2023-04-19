@@ -118,7 +118,6 @@ impl Vault {
             get_vault_variable_selector(&self.vault_addr.clone(), &"hasDynamicFees".to_string()),
             get_vault_variable_selector(&self.vault_addr.clone(), &"inManagerMode".to_string()),
             get_vault_variable_selector(&self.vault_addr.clone(), &"isSwapEnabled".to_string()),
-            // get_vault_variable_selector(&self.vault_addr.clone(), &"liquidationFeeUsd".to_string()),
             get_vault_variable_selector(&self.vault_addr.clone(), &"borrowingRateInterval".to_string()),
             get_vault_variable_selector(&self.vault_addr.clone(), &"borrowingRateFactor".to_string()),
             get_vault_variable_selector(&self.vault_addr.clone(), &"stableBorrowingRateFactor".to_string()),
@@ -135,7 +134,6 @@ impl Vault {
         has_dynamic_fees,
         in_manager_mode,
         is_swap_enabled,
-        liquidation_fee_usd,
         borrowing_rate_interval,
         borrowing_rate_factor,
         stable_borrowing_rate_factor,
@@ -150,11 +148,12 @@ impl Vault {
             self.state.has_dynamic_fees = if has_dynamic_fees[0].clone().into_uint().expect("Failed to parse has_dynamic_fees").as_u32() == 1 { true } else { false };
             self.state.in_manager_mode = if in_manager_mode[0].clone().into_uint().expect("Failed to parse in_manager_mode").as_u32() == 1 { true } else { false };
             self.state.is_swap_enabled = if is_swap_enabled[0].clone().into_uint().expect("Failed to parse is_swap_enabled").as_u32() == 1 { true } else { false };
-            self.state.liquidation_fee_usd = liquidation_fee_usd[0].clone().into_uint().expect("Failed to parse liquidation_fee_usd");
             self.state.borrowing_rate_interval = Duration::from_secs(borrowing_rate_interval[0].clone().into_uint().expect("Failed to parse borrowing_rate_interval").as_u64());
             self.state.borrowing_rate_factor = borrowing_rate_factor[0].clone().into_uint().expect("Failed to parse borrowing_rate_factor");
             self.state.stable_borrowing_rate_factor = stable_borrowing_rate_factor[0].clone().into_uint().expect("Failed to parse stable_borrowing_rate_factor");
             self.state.total_token_weights = total_token_weights[0].clone().into_uint().expect("Failed to parse total_token_weights");
+
+            // println!("total_token_weights[0].clone().into_uint(): {}", total_token_weights[0].clone().into_uint().unwrap());
         } else {
             anyhow::bail!("Invalid vault state return data (may be invalid ABI), check Vault smart contract");
         }
@@ -201,8 +200,6 @@ impl Vault {
         println!("data result {:?}", results);
 
         for (token, result) in tokens.iter_mut().zip(results) {
-            println!("result {:?}", result);
-            println!("result slice {:?}", result.as_slice());
             if let [
                 feeReserves,
                 usdpAmounts,
@@ -238,7 +235,6 @@ impl Vault {
             .map(|token| {
             let (vault_addr, data) = token.build_get_bid_price_call(&self.vault_addr);
             (vault_addr, data)
-
         }).collect();
 
         let call_len = fetch_ask_price_calls.len();
@@ -252,9 +248,11 @@ impl Vault {
             .into_iter().map(_format_price).collect::<Vec<_>>();
         for (token, ask_price) in tokens.iter_mut().zip(ask_prices) {
             token.ask_price = Some(ask_price);
+            token.min_price = Some(ask_price);
         }
         for (token, bid_price) in tokens.iter_mut().zip(bid_prices) {
             token.bid_price = Some(bid_price);
+            token.max_price = Some(bid_price);
         }
 
         println!("**********done fetch_token_prices********");

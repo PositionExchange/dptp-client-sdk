@@ -7,18 +7,18 @@ use core::{*};
 use std::sync::{Arc, Mutex};
 use console_error_panic_hook;
 use ethabi::ethereum_types::U256;
-use serde::de::Unexpected::Option;
 use wasm_bindgen::__rt::IntoJsResult;
 use core::contracts::vault_logic::VaultLogic;
 use core::contracts::token::Token;
 use rust_decimal::prelude::Decimal;
 use std::panic;
-use web_sys::console;
 use wasm_logger::*;
 
 use core::contracts::vault_logic;
 // use core::contracts::Va;
 use ethaddr::Address;
+use std::collections::HashMap;
+
 
 
 
@@ -155,7 +155,8 @@ impl WasmRouter {
 
         let mut buy_glp = GetAmountOut{
             amount_out : U256::from(0),
-            fee_basis_point: 0
+            fee_basis_point: 0,
+            mapping_fee_token : HashMap::new(),
 
         };
         for token_element in self.router.config.tokens.iter_mut() {
@@ -176,7 +177,9 @@ impl WasmRouter {
                     total_token_weights,
                     has_dynamic_fees
                 );
-                token_element.buy_plp_fees = Some( Decimal::from(fee_basis_point));
+
+                buy_glp.mapping_fee_token.insert(token_element.address.clone(), fee_basis_point);
+                // token_element.buy_plp_fees = Some( Decimal::from(fee_basis_point));
                 if token_address == token_element.address {
                     buy_glp.amount_out = glp_amount;
                     buy_glp.fee_basis_point = fee_basis_point
@@ -193,10 +196,9 @@ impl WasmRouter {
     pub fn get_buy_glp_to_amount(&mut self, to_amount: &str, token_address: &str) -> JsValue {
         let mut buy_glp = GetAmountOut{
             amount_out : U256::from(0),
-            fee_basis_point: 0
-
+            fee_basis_point: 0,
+            mapping_fee_token : HashMap::new(),
         };
-        let mut count =0;
         for token_element in self.router.config.tokens.iter_mut() {
 
             if token_element.is_tradeable.unwrap() {
@@ -221,7 +223,9 @@ impl WasmRouter {
                     &total_token_weights,
                     has_dynamic_fees
                 );
-                token_element.buy_plp_fees = Some( Decimal::from(fee_basis_point));
+                buy_glp.mapping_fee_token.insert(token_element.address.clone(), fee_basis_point);
+
+                // token_element.buy_plp_fees = Some( Decimal::from(fee_basis_point));
                 if token_address == token_element.address {
                     buy_glp.amount_out = glp_amount;
                     buy_glp.fee_basis_point = fee_basis_point
@@ -239,22 +243,19 @@ impl WasmRouter {
 
         let mut buy_glp = GetAmountOut{
             amount_out : U256::from(0),
-            fee_basis_point: 0
+            fee_basis_point: 0,
+            mapping_fee_token : HashMap::new(),
+
 
         };
         for token_element in self.router.config.tokens.iter_mut() {
             if token_element.is_tradeable.unwrap() {
 
                 let token = token_element.clone();
-
                 let amount = U256::from_str(to_amount).unwrap();
-
                 let price =  self.router.price_plp_buy.clone();
-
                 let usdp_supply = self.router.vault.state.usdp_supply.clone();
-
                 let total_token_weights =  self.router.vault.state.total_token_weights.clone();
-
                 let has_dynamic_fees = self.router.vault.state.has_dynamic_fees.clone();
 
                 let (glp_amount, fee_basis_point) = vault_logic::get_sell_glp_to_amount(
@@ -265,7 +266,9 @@ impl WasmRouter {
                     total_token_weights,
                     has_dynamic_fees
                 );
-                token_element.buy_plp_fees = Some( Decimal::from(fee_basis_point));
+                buy_glp.mapping_fee_token.insert(token_element.address.clone(), fee_basis_point);
+
+                // token_element.buy_plp_fees = Some( Decimal::from(fee_basis_point));
                 if token_address == token_element.address {
                     buy_glp.amount_out = glp_amount;
                     buy_glp.fee_basis_point = fee_basis_point
@@ -281,7 +284,9 @@ impl WasmRouter {
     pub fn get_sell_glp_from_amount(&mut self, to_amount: &str, token_address: &str) -> JsValue {
         let mut buy_glp = GetAmountOut{
             amount_out : U256::from(0),
-            fee_basis_point: 0
+            fee_basis_point: 0,
+            mapping_fee_token : HashMap::new(),
+
 
         };
         for token_element in self.router.config.tokens.iter_mut() {
@@ -302,7 +307,9 @@ impl WasmRouter {
                     total_token_weights,
                     has_dynamic_fees
                 );
-                token_element.buy_plp_fees = Some( Decimal::from(fee_basis_point));
+                buy_glp.mapping_fee_token.insert(token_element.address.clone(), fee_basis_point);
+
+                // token_element.buy_plp_fees = Some( Decimal::from(fee_basis_point));
                 if token_address == token_element.address {
                     buy_glp.amount_out = glp_amount;
                     buy_glp.fee_basis_point = fee_basis_point
@@ -336,6 +343,7 @@ impl WasmRouter {
 pub struct GetAmountOut {
     pub amount_out: U256,
     pub fee_basis_point: u64,
+    pub mapping_fee_token: HashMap<String, u64>,
 }
 
 // #[derive(Serialize, Deserialize)]

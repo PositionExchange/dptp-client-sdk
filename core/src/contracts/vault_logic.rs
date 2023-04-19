@@ -9,8 +9,8 @@ const MINT_BURN_FEE_BASIS_POINTS: u32 = 0;
 const TAX_BASIS_POINTS: u32 = 0;
 
 lazy_static! {
-    static ref PRECISION: U256 = U256::from(0);
-    static ref BASIS_POINTS_DIVISOR: U256 = U256::from(0);
+    static ref PRECISION: U256 = U256::from(1) * U256::from(10u32).pow(30.into());
+    static ref BASIS_POINTS_DIVISOR: U256 = U256::from(10000);
 }
 
 pub trait VaultLogic {
@@ -147,7 +147,7 @@ impl VaultLogic for VaultState {
         if self.usdp_supply.eq(&U256::from(0)) {
             return U256::from(0);
         } else {
-            (aum * expand_decimals(1, 18) ) / (self.plp_supply * expand_decimals(1, 12))
+            (aum * expand_decimals(1, 18)) / (self.plp_supply * expand_decimals(1, 12))
         }
     }
 }
@@ -164,8 +164,6 @@ fn get_target_usdg_amount(token_weight: u64, usdp_supply: &U256, total_token_wei
 
     Some(token_weight * usdp_supply / total_token_weights)
 }
-
-
 
 
 fn get_fee_basis_points(
@@ -284,7 +282,7 @@ pub fn get_sell_glp_from_amount(
 
     glp_amount = glp_amount * *BASIS_POINTS_DIVISOR / (*BASIS_POINTS_DIVISOR - fee_basis_points);
 
-    (glp_amount, fee_basis_points.into())
+    (glp_amount.checked_div(U256::from(10).pow(U256::from(18))).unwrap(), fee_basis_points.into())
 }
 
 
@@ -319,7 +317,7 @@ pub fn get_buy_glp_from_amount(
 
     from_amount = from_amount * *BASIS_POINTS_DIVISOR / (*BASIS_POINTS_DIVISOR - fee_basis_points);
 
-    (from_amount, fee_basis_points.into())
+    (from_amount.checked_div(U256::from(10).pow(U256::from(18))).unwrap(), fee_basis_points.into())
 }
 
 // Buy PLP - exact token to token (PLP)
@@ -359,7 +357,9 @@ pub fn get_buy_glp_to_amount(
         .unwrap()
         .checked_div(*PRECISION)
         .unwrap();
+
     usdg_amount = adjust_for_decimals(&usdg_amount, pay_token.decimals.into(), USDP_DECIMALS);
+
     const MINT_BURN_FEE_BASIS_POINTS: u32 = 10;
     const TAX_BASIS_POINTS: u32 = 10;
     let fee_basis_points = get_fee_basis_points(
@@ -380,7 +380,8 @@ pub fn get_buy_glp_to_amount(
         .checked_div(*BASIS_POINTS_DIVISOR)
         .unwrap();
 
-    (glp_amount, fee_basis_points.into())
+
+    (glp_amount.checked_div(U256::from(10).pow(U256::from(18))).unwrap(), fee_basis_points.into())
 }
 
 // Sell PLP- exact token  (PLP) to token
@@ -419,7 +420,7 @@ pub fn get_sell_glp_to_amount(
 
     from_amount = from_amount * *BASIS_POINTS_DIVISOR / (*BASIS_POINTS_DIVISOR - fee_basis_points);
 
-    (from_amount, fee_basis_points.into())
+    (from_amount.checked_div(U256::from(10).pow(U256::from(18))).unwrap(), fee_basis_points.into())
 }
 
 // Usage example
