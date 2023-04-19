@@ -4,9 +4,11 @@ rpc_urls = ["https://data-seed-prebsc-1-s1.binance.org:8545/"]
 multicall_address = "0x6e5bb1a5ad6f68a8d7d6a5e47750ec15773d6042"
 
 [contract_address]
-vault="0x3e6fb757447d34347AD940E0E789d976a1cf3842"
+vault="0x398B00E3c45b393B3b8453caF349baFc33e16be5"
 plp_manager="0xDF49C2d458892B681331F4EEC0d09A88b283f444"
 plp_token="0x792bA5e9E0Cd15083Ec2f58E434d875892005b91"
+reward_tracker_fee_plp = "0x50C121Da29CBD8bD96Bdb6c6965F93F09C2Fc598"
+reward_router = "0x806c04c3a79e3bd6dde8a8928b92b58fc61e3ce4"
 
 
 [[tokens]]
@@ -14,27 +16,72 @@ chain_id = 97
 address = "0x542E4676238562b518B968a1d03626d544a7BCA2"
 symbol = "USDT"
 decimals = 18
-name = "USDT"
+name = "USD-Tether"
 is_whitlisted = true
+is_tradeable = true
 logo_url = "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png"
+
 
 [[tokens]]
 chain_id = 97
 address = "0xc4900937c3222CA28Cd4b300Eb2575ee0868540F"
 symbol = "BTC"
 decimals = 18
-name = "BTC"
+name = "Bitcoin"
 is_whitelisted = true
+is_tradeable = true
+logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/1.png"
+
+
+[[tokens]]
+chain_id = 97
+address = "0xB202545C693631eEeBC83E600c74cFf4EE54F39c"
+symbol = "DAI"
+decimals = 18
+name = "DAI Token"
+is_whitlisted = true
+is_tradeable = true
+logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/4943.png"
+
+
+[[tokens]]
+chain_id = 97
+address = "0xb9838B8EeD90731e44733881a04D275Eb4064288"
+symbol = "BUSD"
+decimals = 18
+name = "Binance USD"
+is_whitlisted = true
+is_tradeable = true
+logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/4687.png"
+
+
+[[tokens]]
+chain_id = 97
+address = "0x4D906559B2cEbBe063757ab76c5620C2149e4b0D"
+symbol = "ETH"
+decimals = 18
+name = "Ethereum"
+is_whitlisted = true
+is_tradeable = true
+logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png"
+
+[[tokens]]
+chain_id = 97
+address = "0x792bA5e9E0Cd15083Ec2f58E434d875892005b91"
+symbol = "PLP"
+decimals = 18
+name = "Position LP"
+is_whitelisted = true
+is_tradeable = false
+logo_url = "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x5CA42204cDaa70d5c773946e69dE942b85CA6706/logo.png"
+
+[[tokens]]
+chain_id = 97
+address = "0x50C121Da29CBD8bD96Bdb6c6965F93F09C2Fc598"
+symbol = "fPLP"
+decimals = 18
+name = "Fee PLP"
+is_whitelisted = true
+is_tradeable = false
 logo_url = ""
-
-#
-#[[tokens]]
-#chain_id = 97
-#address = "0x542E4676238562b518B968a1d03626d544a7BCA2"
-#symbol = "POSI"
-#decimals = 18
-#name = "Position Exchange"
-#is_whitlisted = true
-#logo_url = "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x5CA42204cDaa70d5c773946e69dE942b85CA6706/logo.png"
-
 

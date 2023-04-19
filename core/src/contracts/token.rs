@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::ops::Sub;
 use ethers::{types::Bytes};
 use ethabi::{ethereum_types::Address, ethereum_types::U256, Contract};
 use std::str::FromStr;
@@ -36,6 +37,7 @@ pub struct Token {
     // get from Vault.tokenConfigurations(address token) function
     pub token_weight: Option<u64>,
     pub is_whitelisted: Option<bool>,
+    pub is_tradeable: Option<bool>,
     pub is_stable_token: Option<bool>,
     pub is_shortable_token: Option<bool>,
     pub min_profit_basis_points: Option<u64>,
@@ -52,9 +54,12 @@ pub struct Token {
     pub buy_plp_fees: Option<Decimal>,
     pub sell_plp_fees: Option<Decimal>,
 
-    pub total_liquidity: Option<Decimal>,
-    pub available_liquidity: Option<Decimal>,
+    pub total_liquidity: Option<U256>,
+    pub available_liquidity: Option<U256>,
     pub usdp_amount: Option<U256>,
+    pub fee_reserves : Option<U256>,
+    pub pool_amounts :Option<U256>,
+    pub reserved_amounts :Option<U256>,
     
 
     pub allowances: Option<HashMap<Address, U256>>,
@@ -72,6 +77,7 @@ impl Token {
             decimals,
             token_weight: None,
             is_whitelisted: None,
+            is_tradeable: None,
             is_stable_token: None,
             is_shortable_token: None,
             min_profit_basis_points: None,
@@ -89,7 +95,10 @@ impl Token {
             sell_plp_fees: None,
             total_liquidity: None,
             available_liquidity: None,
-            usdp_amount: None
+            usdp_amount: None,
+            fee_reserves : None,
+            pool_amounts :None,
+            reserved_amounts :None,
         }
     }
     pub fn build_balance_of_call(&self, account: &String) -> (Address, Bytes) {
@@ -121,6 +130,10 @@ impl Token {
         let function_name = "tokenConfigurations".to_string();
         return self._build_vault_contract_call(vault_address, &function_name);
     }
+    pub fn build_get_vault_info(&self, vault_address: &String) -> (Address, Bytes) {
+        let function_name = "vaultInfo".to_string();
+        return self._build_vault_contract_call(vault_address, &function_name);
+    }
     pub fn build_get_ask_price_call(&self, vault_address: &String) -> (Address, Bytes) {
         let function_name = "getAskPrice".to_string();
         return self._build_vault_contract_call(vault_address, &function_name);
@@ -137,7 +150,6 @@ impl Token {
         let function = contract.function(function_name).unwrap();
         let data: Bytes = function.encode_input(&[ethabi::Token::Address(self.get_parsed_address())]).unwrap().into();
         (address, data)
-
     }
 
     pub fn update_token_configuration(
@@ -157,13 +169,28 @@ impl Token {
         self.max_usdp_amount = Some(max_usdp_amount);
     }
 
+
+    pub fn update_vault_info(
+        &mut self,
+        usdp_amount: U256,
+        fee_reserves : U256,
+        pool_amounts :U256,
+        reserved_amounts :U256,
+    ) {
+        self.usdp_amount = Some(usdp_amount);
+        self.fee_reserves = Some(fee_reserves);
+        self.pool_amounts = Some(pool_amounts);
+        self.reserved_amounts = Some(reserved_amounts);
+
+    }
+
     pub fn update_balance(&mut self, account: &String, balance: U256) {
         let addr: Address = account.parse().unwrap();
         if self.balances.is_none() {
             self.balances = Some(HashMap::new());
         }
         // TODO use self decimals instead of hardcoding 18
-        let b = ethers::utils::format_units(balance, self.decimals as u32).expect("faill parse units");
+        let b = ethers::utils::format_units(balance, self.decimals as u32).expect("fall parse units");
         let dec_balance = Decimal::from_str(
             &b.to_string()
         ).expect("convert to decimal");
@@ -205,9 +232,16 @@ impl Token {
         ratio
     }
 
+    pub fn calculate_available_liquidity(&mut self){
+        if self.is_tradeable.is_some() {
+            self.available_liquidity = Option::from(self.max_usdp_amount.unwrap() - self.usdp_amount.unwrap());
+        }
+    }
+
     fn get_parsed_address(&self) -> Address {
         return self.address.parse().expect("Token address parse error");
     }
+
 }
 
 
