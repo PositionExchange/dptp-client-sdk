@@ -118,9 +118,16 @@ impl WasmRouter {
     #[wasm_bindgen]
     pub async fn fetch_async(&mut self, account: String) {
 
-        if Address::from_str_checksum(&account).is_ok() {
+
+        log::info!("check set_account {}", account.clone());
+
+
+
+        if account.len() > 0 {
+            log::info!("into set account {}", account.clone());
             self.router.set_account(account);
         }
+
         self.router.fetch_data().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("fetch data failure");
         self.router.vault.init_vault_state().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("init vault state failure");
         self.router.calculate_price_plp();

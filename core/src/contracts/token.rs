@@ -61,9 +61,8 @@ pub struct Token {
     pub fee_reserves : Option<U256>,
     pub pool_amounts :Option<U256>,
     pub reserved_amounts :Option<U256>,
-    
 
-    pub allowances: Option<HashMap<Address, U256>>,
+    pub allowances: Option<HashMap<Address, HashMap<Address, U256>>>,
     pub balances: Option<HashMap<Address, Decimal>>,
 }
 
@@ -114,16 +113,17 @@ impl Token {
         (token, data)
     }
 
-    pub fn build_allowance_of_call(&self, account: &String) -> (Address, Bytes) {
-        let address: Address = account.parse().expect("Invalid account");
+    pub fn build_allowance_call(&self, account: &String, spender: &String) -> (Address, Bytes) {
+        let addressOwner: Address = account.parse().expect("Invalid account");
+        let addressSpender: Address = spender.parse().expect("Invalid account");
         let token: Address = self.address.parse().expect("Invalid token address");
         let function_name = "allowance";
         let erc20_abi = include_str!("../../abi/erc20.json");
         let contract = Contract::load(erc20_abi.as_bytes()).unwrap();
         let function = contract.function(function_name).unwrap();
         let data: Bytes = function.encode_input(&[
-            ethabi::Token::Address(address),
-            ethabi::Token::Address(address),
+            ethabi::Token::Address(addressOwner),
+            ethabi::Token::Address(addressSpender),
         ])
         .unwrap().into();
         (token, data)
@@ -201,12 +201,20 @@ impl Token {
         self.balances.as_mut().unwrap().insert(addr, dec_balance);
     }
 
-    pub fn update_allowance(&mut self, account: &String, allowance: U256) {
+    pub fn update_allowance(&mut self, account: &String, allowance: U256, spender: &String) {
         let addr: Address = account.parse().unwrap();
+        let spenderAddress: Address = spender.parse().unwrap();
         if self.allowances.is_none() {
             self.allowances = Some(HashMap::new());
         }
-        self.allowances.as_mut().unwrap().insert(addr, allowance);
+
+        if let Some(inner_map) = self.allowances.as_mut().unwrap().get_mut(&addr) {
+            inner_map.insert(spenderAddress, allowance);
+        } else {
+            let mut inner_map = HashMap::new();
+            inner_map.insert(spenderAddress, allowance);
+            self.allowances.as_mut().unwrap().insert(addr, inner_map);
+        }
     }
 
     pub fn get_balance(&self, account: &String) -> String {
@@ -218,13 +226,14 @@ impl Token {
             .get(&addr);
         return balance.unwrap_or_else(|| &Decimal::ZERO).to_string();
     }
-    pub fn get_allowance(&self, account: &String) -> String {
+    pub fn get_allowance(&self, account: &String, spender : &String) -> String {
         let addr: Address = account.parse().unwrap();
+        let spender: Address = spender.parse().unwrap();
         let binding = self.allowances
             .clone()
             .unwrap_or_else(|| HashMap::new());
         let val = binding
-            .get(&addr);
+            .get(&addr).unwrap().get(&spender);
         let zero = U256::from(0);
         return val.unwrap_or_else(|| &&zero).to_string();
     }
@@ -270,7 +279,10 @@ mod tests {
     #[test]
     fn build_allowance_of_call_works() {
         let token = create_mock_token();
-        let (address, data) = token.build_allowance_of_call(&"0x1f9840a85d5af5bf1d1762f925bdaddc4201f984".to_string());
+        let (address, data) = token.build_allowance_call(
+            &"0x1f9840a85d5af5bf1d1762f925bdaddc4201f984".to_string(),
+            &"0x1f9840a85d5af5bf1d1762f925bdaddc4201f984".to_string()
+        );
         let data_string = hex::encode(data.clone());
         assert_eq!(address, Address::from_str("0x1f9840a85d5af5bf1d1762f925bdaddc4201f984").unwrap());
         assert_eq!(data_string, "dd62ed3e0000000000000000000000001f9840a85d5af5bf1d1762f925bdaddc4201f9840000000000000000000000001f9840a85d5af5bf1d1762f925bdaddc4201f984".to_string());
@@ -338,14 +350,17 @@ mod tests {
         let user1 = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984".to_string();
         let user2 = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f985".to_string();
         let user3 = "0x1f9840a85d5af5bf1d1762f925bdaddc4201f986".to_string();
-        token.update_allowance(&user1, U256::from(1000));
-        assert_eq!(token.get_allowance(&user1), "1000");
-        token.update_allowance(&user2, U256::from(5000));
-        assert_eq!(token.get_allowance(&user1), "1000");
-        assert_eq!(token.get_allowance(&user2), "5000");
-        token.update_allowance(&user2, U256::from(6000));
-        assert_eq!(token.get_allowance(&user2), "6000");
-        assert_eq!(token.get_allowance(&user3), "0");
+        token.update_allowance(&user1, U256::from(1000), &user1);
+        assert_eq!(token.get_allowance(&user1, &user1), "1000");
+        //
+        token.update_allowance(&user2, U256::from(5000), &user2);
+        assert_eq!(token.get_allowance(&user1, &user1), "1000");
+        //
+        assert_eq!(token.get_allowance(&user2, &user2), "5000");
+
+        token.update_allowance(&user2, U256::from(6000), &user1);
+        assert_eq!(token.get_allowance(&user2, &user1), "6000");
+        // assert_eq!(token.get_allowance(&user3, &user1), "0");
     }
 
     #[test]

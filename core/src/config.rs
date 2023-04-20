@@ -1,6 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::{fs, env};
-use std::path::PathBuf;
 use crate::contracts::token::Token;
 use crate::contracts::multicall::Multicall;
 use crate::contracts::global_fetch::GlobalFetch;
@@ -12,8 +10,16 @@ pub struct Config {
     pub selected_account: Option<String>,
     pub chain: Chain,
     pub tokens: Vec<Token>,
-    pub contract_address: ContractAddress
+    pub contract_address: ContractAddress,
+    pub contract_spender : Vec<Spender>
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct Spender {
+    pub address: String,
+    pub name: String,
+}
+
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Chain {
@@ -28,6 +34,11 @@ pub struct ContractAddress {
     pub plp_manager: String,
     pub plp_token: String,
     pub reward_router: String
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct ContractSpenderAddress {
+    pub plp_manager: String,
 }
 
 impl Config {

@@ -22,4 +22,5 @@ async-std = { version = "1.10.0", features = ["attributes"] }
 futures = "0.3"
 wasm-bindgen = "0.2.78"
 tiny-keccak = "2.0.2"
+rand = "0.8.5"
 
