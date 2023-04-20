@@ -11,6 +11,7 @@ use contracts::global_fetch::*;
 use rust_decimal::prelude::Decimal;
 use crate::contracts::vault_logic::VaultLogic;
 use ethabi::{ethereum_types::U256};
+use contracts::vault_logic;
 
 
 // use contracts::vault_logic;
@@ -148,6 +149,7 @@ mod tests {
     use std::str::FromStr;
 
     use rust_decimal::Decimal;
+    use crate::contracts::vault_logic;
 
     use super::*;
 
@@ -236,7 +238,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_buy (){
+    async fn get_buy_glp_to_amount (){
         let mut router = Router::new();
         router.initilize(97).unwrap();
         router.vault.init_vault_state().await.unwrap();
@@ -245,11 +247,76 @@ mod tests {
         // println!("price plp buy {}", router.price_plp_buy.unwrap().as_u32());
         router.fetch_data().await.expect("fetch data failed");
 
-        let token  = router.load_tokens();
-        println!("&token[0]: {}",  &token[0].min_price.unwrap().parsed);
+
+        let tokens  = router.load_tokens();
+        println!("&token[0]: {}",  &tokens[0].min_price.unwrap().parsed);
         let (amount, fee) = router.vault.state.get_buy_glp_to_amount(
-            &U256::from_str("10000000000000000000").unwrap(),
-            &token[0] );
+            &U256::from_dec_str("10000000000000000000").unwrap(),
+            &tokens[0] );
+        println!("amount: {}", amount);
+        println!("fee: {}", fee);
+
+    }
+    #[tokio::test]
+    async fn get_buy_glp_from_amount (){
+        let mut router = Router::new();
+        router.initilize(97).unwrap();
+        router.vault.init_vault_state().await.unwrap();
+
+        router.calculate_price_plp();
+        // println!("price plp buy {}", router.price_plp_buy.unwrap().as_u32());
+        router.fetch_data().await.expect("fetch data failed");
+
+
+        let tokens  = router.load_tokens();
+        println!("&token[0]: {}",  &tokens[0].min_price.unwrap().parsed);
+        let (amount, fee) = router.vault.state.get_buy_glp_from_amount(
+            U256::from_dec_str("1143979670441064503015").unwrap(),
+            &tokens[0] );
+        println!("amount: {}", amount);
+        println!("fee: {}", fee);
+
+    }
+
+
+    #[tokio::test]
+    async fn get_sell_glp_to_amount (){
+        let mut router = Router::new();
+        router.initilize(97).unwrap();
+        router.vault.init_vault_state().await.unwrap();
+
+        router.calculate_price_plp();
+        // println!("price plp buy {}", router.price_plp_buy.unwrap().as_u32());
+        router.fetch_data().await.expect("fetch data failed");
+
+
+        let tokens  = router.load_tokens();
+        println!("&token[0]: {}",  &tokens[0].min_price.unwrap().parsed);
+        let (amount, fee) = router.vault.state.get_sell_glp_to_amount(
+            U256::from_dec_str("10000000000000000000").unwrap(),
+            &tokens[0] );
+        println!("amount: {}", amount);
+        println!("fee: {}", fee);
+
+    }
+    #[tokio::test]
+    async fn get_sell_glp_from_amount (){
+        let mut router = Router::new();
+        router.initilize(97).unwrap();
+        router.vault.init_vault_state().await.unwrap();
+
+        router.calculate_price_plp();
+        // println!("price plp buy {}", router.price_plp_buy.unwrap().as_u32());
+        router.fetch_data().await.expect("fetch data failed");
+
+
+        let tokens  = router.load_tokens();
+        println!("&token[0]: {}",  &tokens[0].min_price.unwrap().parsed);
+        let (amount, fee) = router.vault.state.get_sell_glp_from_amount(
+            U256::from_dec_str("87000190039272651").unwrap(),
+            &tokens[0] );
+        println!("amount: {}", amount);
+        println!("fee: {}", fee);
 
     }
 

@@ -19,6 +19,7 @@ decimals = 18
 name = "USD-Tether"
 is_whitlisted = true
 is_tradeable = true
+quote_precision = 4
 logo_url = "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png"
 
 
@@ -30,6 +31,7 @@ decimals = 18
 name = "Bitcoin"
 is_whitelisted = true
 is_tradeable = true
+quote_precision = 2
 logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/1.png"
 
 
@@ -41,6 +43,7 @@ decimals = 18
 name = "DAI Token"
 is_whitlisted = true
 is_tradeable = true
+quote_precision = 4
 logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/4943.png"
 
 
@@ -52,6 +55,7 @@ decimals = 18
 name = "Binance USD"
 is_whitlisted = true
 is_tradeable = true
+quote_precision = 4
 logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/4687.png"
 
 
@@ -63,6 +67,7 @@ decimals = 18
 name = "Ethereum"
 is_whitlisted = true
 is_tradeable = true
+quote_precision = 2
 logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png"
 
 [[tokens]]
@@ -73,6 +78,7 @@ decimals = 18
 name = "Position LP"
 is_whitelisted = true
 is_tradeable = false
+quote_precision = 4
 logo_url = "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x5CA42204cDaa70d5c773946e69dE942b85CA6706/logo.png"
 
 [[tokens]]
@@ -83,5 +89,6 @@ decimals = 18
 name = "Fee PLP"
 is_whitelisted = true
 is_tradeable = false
+quote_precision = 4
 logo_url = ""
 

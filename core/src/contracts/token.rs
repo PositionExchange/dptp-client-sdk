@@ -34,6 +34,7 @@ pub struct Token {
     pub symbol: String,
     pub logo_url : String,
     pub decimals: u8,
+    pub quote_precision: u8,
     // get from Vault.tokenConfigurations(address token) function
     pub token_weight: Option<u64>,
     pub is_whitelisted: Option<bool>,
@@ -75,6 +76,7 @@ impl Token {
             symbol: symbol.to_string(),
             logo_url : logo_url.to_string(),
             decimals,
+            quote_precision : 4,
             token_weight: None,
             is_whitelisted: None,
             is_tradeable: None,
@@ -83,6 +85,7 @@ impl Token {
             min_profit_basis_points: None,
             max_usdp_amount: None,
             is_native_token: None,
+
 
             ask_price: None,
             bid_price: None,

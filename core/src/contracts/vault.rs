@@ -168,10 +168,7 @@ impl Vault {
             (vault_addr, data)
         }).collect();
         let results = self.chain.execute_multicall(calls, include_str!("../../abi/vault.json").to_string(), "tokenConfigurations").await.expect("[Vault] Failed to fetch token configurations");
-        println!("data result {:?}", results);
         for (token, result) in tokens.iter_mut().zip(results) {
-            println!("result {:?}", result);
-            println!("result slice {:?}", result.as_slice());
             if let [is_whitelisted, _token_decimals, is_stable_token, is_shortable_token, min_profit_basis_points, token_weight, max_usdp_amount] = result.as_slice() {
                 token.update_token_configuration(
                     token_weight.clone().into_uint().expect("Failed to parse token weight").as_u64(),
@@ -197,7 +194,6 @@ impl Vault {
 
 
         let results = self.chain.execute_multicall(calls, include_str!("../../abi/vault.json").to_string(), "vaultInfo").await.expect("[Vault] Failed to fetch vault info");
-        println!("data result {:?}", results);
 
         for (token, result) in tokens.iter_mut().zip(results) {
             if let [

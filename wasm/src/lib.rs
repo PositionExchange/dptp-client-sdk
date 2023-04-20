@@ -162,20 +162,11 @@ impl WasmRouter {
         for token_element in self.router.config.tokens.iter_mut() {
             if token_element.is_tradeable.unwrap() {
 
-                let token = token_element.clone();
-                let amount = U256::from_str(to_amount).unwrap();
-                let price =  self.router.price_plp_buy.clone();
-                let usdp_supply = self.router.vault.state.usdp_supply.clone();
-                let total_token_weights =  self.router.vault.state.total_token_weights.clone();
-                let has_dynamic_fees = self.router.vault.state.has_dynamic_fees.clone();
+                let amount = U256::from_dec_str(to_amount).unwrap();
 
-                let (glp_amount, fee_basis_point) = vault_logic::get_buy_glp_from_amount(
+                let (glp_amount, fee_basis_point) = self.router.vault.state.get_buy_glp_from_amount(
                     amount,
-                    &token,
-                    price,
-                    usdp_supply,
-                    total_token_weights,
-                    has_dynamic_fees
+                    token_element
                 );
 
                 buy_glp.mapping_fee_token.insert(token_element.address.clone(), fee_basis_point);
@@ -202,26 +193,10 @@ impl WasmRouter {
         for token_element in self.router.config.tokens.iter_mut() {
 
             if token_element.is_tradeable.unwrap() {
-
-                let token = token_element.clone();
-
-                let amount = U256::from_str(to_amount).unwrap();
-
-                let price =  self.router.price_plp_buy.clone();
-
-                let usdp_supply = self.router.vault.state.usdp_supply.clone();
-
-                let total_token_weights =  self.router.vault.state.total_token_weights.clone();
-
-                let has_dynamic_fees = self.router.vault.state.has_dynamic_fees.clone();
-
-                let (glp_amount, fee_basis_point) = vault_logic::get_buy_glp_to_amount(
+                let amount = U256::from_dec_str(to_amount).unwrap();
+                let (glp_amount, fee_basis_point) = self.router.vault.state.get_buy_glp_to_amount(
                     &amount,
-                    &token,
-                    &price,
-                    &usdp_supply,
-                    &total_token_weights,
-                    has_dynamic_fees
+                    token_element
                 );
                 buy_glp.mapping_fee_token.insert(token_element.address.clone(), fee_basis_point);
 
@@ -251,20 +226,10 @@ impl WasmRouter {
         for token_element in self.router.config.tokens.iter_mut() {
             if token_element.is_tradeable.unwrap() {
 
-                let token = token_element.clone();
-                let amount = U256::from_str(to_amount).unwrap();
-                let price =  self.router.price_plp_buy.clone();
-                let usdp_supply = self.router.vault.state.usdp_supply.clone();
-                let total_token_weights =  self.router.vault.state.total_token_weights.clone();
-                let has_dynamic_fees = self.router.vault.state.has_dynamic_fees.clone();
-
-                let (glp_amount, fee_basis_point) = vault_logic::get_sell_glp_to_amount(
+                let amount = U256::from_dec_str(to_amount).unwrap();
+                let (glp_amount, fee_basis_point) = self.router.vault.state.get_sell_glp_to_amount(
                     amount,
-                    &token,
-                    price,
-                    usdp_supply,
-                    total_token_weights,
-                    has_dynamic_fees
+                    token_element
                 );
                 buy_glp.mapping_fee_token.insert(token_element.address.clone(), fee_basis_point);
 
@@ -292,20 +257,11 @@ impl WasmRouter {
         for token_element in self.router.config.tokens.iter_mut() {
             if token_element.is_tradeable.unwrap() {
 
-                let token = token_element.clone();
-                let amount = U256::from_str(to_amount).unwrap();
-                let price =  self.router.price_plp_buy.clone();
-                let usdp_supply = self.router.vault.state.usdp_supply.clone();
-                let total_token_weights =  self.router.vault.state.total_token_weights.clone();
-                let has_dynamic_fees = self.router.vault.state.has_dynamic_fees.clone();
+                let amount = U256::from_dec_str(to_amount).unwrap();
 
-                let (glp_amount, fee_basis_point) = vault_logic::get_sell_glp_from_amount(
+                let (glp_amount, fee_basis_point) = self.router.vault.state.get_sell_glp_from_amount(
                     amount,
-                    &token,
-                    price,
-                    usdp_supply,
-                    total_token_weights,
-                    has_dynamic_fees
+                    token_element
                 );
                 buy_glp.mapping_fee_token.insert(token_element.address.clone(), fee_basis_point);
 
