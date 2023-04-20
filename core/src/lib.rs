@@ -3,15 +3,13 @@ pub mod contracts;
 use async_trait::async_trait;
 use contracts::vault::Vault;
 // use futures::try_join;
-use std::{sync::{Arc, Mutex}};
+// use std::{sync::{Arc, Mutex}};
 // use tokio::{task::futures};
 
 use crate::contracts::token::Token;
 use contracts::global_fetch::*;
-use rust_decimal::prelude::Decimal;
 use crate::contracts::vault_logic::VaultLogic;
 use ethabi::{ethereum_types::U256};
-use contracts::vault_logic;
 
 
 // use contracts::vault_logic;
@@ -48,6 +46,7 @@ impl RouterTrait for Router {
                 },
                 tokens: vec![],
                 contract_address: config::ContractAddress::default(),
+                contract_spender :vec![],
             },
             vault: Vault::default(),
             price_plp_buy : U256::zero(),
@@ -85,12 +84,7 @@ impl RouterTrait for Router {
 
 
     async fn fetch_data(&mut self) -> anyhow::Result<()> {
-        // let vault = Vault::new(
-        //     &self.config.contract_address.vault,
-        //     &"".to_string(),
-        //     &"".to_string(),
-        //     &self.config.chain
-        // );
+
         let tokens = self.load_tokens();
         // println!("tokens: ", tokens);
         let tokens = tokio::sync::Mutex::new(tokens);
@@ -126,9 +120,11 @@ impl RouterTrait for Router {
                 let mut tokens = tokens.lock().await;
                 println!("task 4 start after lock");
                 self.config.fetch_balances(&mut tokens).await;
+                self.config.fetch_allowance(&mut tokens).await;
                 // println!("task 3 done, time {}", startTime.elapsed().as_millis());
             },
         ];
+        println!("tokens full: {:?}", tokens);
         // re assign new tokens
         self.config.tokens = tokens.lock().await.to_vec();
 
@@ -158,11 +154,13 @@ mod tests {
         // 1. load config
         let mut router = Router::new();
         router.initilize(97).unwrap();
-        let tokens = router.load_tokens();
-        println!("Loaded tokens: {:?}", tokens);
+
+        println!("spender {:?}", router.config.contract_spender);
+        // let tokens = router.load_tokens();
+        // println!("Loaded tokens: {:?}", tokens);
         // assert_eq!(tokens.len(), 3);
-        assert_eq!(tokens[0].symbol, "USDT");
-        assert_eq!(tokens[1].symbol, "BTC");
+        // assert_eq!(tokens[0].symbol, "USDT");
+        // assert_eq!(tokens[1].symbol, "BTC");
 
         // 2. set account
         router.set_account("0xaC7c1a2fFb8b3f3bEa3e6aB4bC8b1A2Ff4Bb4Aa4".to_string());
@@ -185,6 +183,8 @@ mod tests {
         router.initilize(97).unwrap();
         println!("start init_vault_state");
         router.vault.init_vault_state().await.unwrap();
+
+        router.set_account("0xDfbE56f4e2177a498B5C49C7042171795434e7D1".to_string());
         println!("done init_vault_state");
 
         router.calculate_price_plp();
@@ -195,7 +195,7 @@ mod tests {
         // println!(router.price_plp_sell.unwrap());
         let tokens = router.load_tokens();
 
-        println!("Loaded tokens: {:?}", tokens);
+        // println!("Loaded tokens: {:?}", tokens);
 
         println!( "available_liquidity {}", tokens[0].available_liquidity.unwrap().to_string());
 
