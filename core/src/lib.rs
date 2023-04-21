@@ -72,7 +72,8 @@ impl RouterTrait for Router {
             &contract_address.plp_manager.to_lowercase(),
             &contract_address.plp_token.to_lowercase(),
             &self.config.chain,
-            Rc::new(RefCell::new(contract_address)),
+            contract_address
+
         );
         for token in self.config.tokens.iter_mut() {
             token.address = token.address.to_lowercase();

@@ -32,6 +32,9 @@ migrate_working_dir/
 .pub/
 /build/
 
+/ios/Runner/**.a
+/android/app/src/main/jniLibs
+
 # Symbolication related
 app.*.symbols
 

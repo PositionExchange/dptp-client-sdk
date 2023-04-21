@@ -48,20 +48,17 @@ cargo build --target wasm32-web --release
 ```
 Then, include the generated .wasm file in your React.js project and import it as a module.
 
-Flutter
-To use the SDK in a Flutter project, you will need to include the flutter folder in your project as a package. Add the following to your pubspec.yaml:
+### Flutter
 
-```yaml
-dependencies:
-  dptp_client_sdk:
-    path: path/to/flutter/folder
+To use the SDK in a Flutter project
+- Generate from Rust
+```bash
+cd flutter 
+./build_rust.sh
 ```
 
-Then, import and use the SDK in your Dart code:
+- And check `flutter/README.md` to implement for Flutter
 
-```dart
-import 'package:dptp_client_sdk/dptp_client_sdk.dart';
-```
 ## Documentation
 
 Please refer to the README files in each subdirectory for detailed information about each component:

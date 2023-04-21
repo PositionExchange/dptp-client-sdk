@@ -24,13 +24,8 @@ flutter/.flutter-plugins
 flutter/.pub/
 flutter/.pub-cache/
 flutter/build/
-flutter/ios/Pods/
-flutter/ios/Runner.xcworkspace/xcuserdata/
-flutter/ios/Runner.xcworkspace/xcshareddata/
-flutter/ios/Runner.xcodeproj/xcuserdata/
-flutter/ios/Runner.xcodeproj/project.xcworkspace/
-flutter/ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/
-flutter/ios/Runner.xcodeproj/xcshareddata/
+flutter/lib/ios/**.a
+#flutter/lib/android/
 *.jks
 *.keystore
 /keys.properties

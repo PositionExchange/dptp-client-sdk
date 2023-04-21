@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dptp_client_sdk/dptp_client_sdk_ffi.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,6 +17,15 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await sdk.initialize(chainId: 97);
+      await sdk.setAccount(
+          account: '0x62a9B1AB58c3B59eF17923792122985d210A94A1');
+      await sdk.fetchData();
+      final token = await sdk.loadTokens();
+      final router = await sdk.getRouter();
+      print('token');
+    });
   }
 
   // This widget is the root of your application.

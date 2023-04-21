@@ -8,17 +8,17 @@
     objects = {
 /* Begin PBXBuildFile section */
         
-                CA6031F68CE4728EE89ED933 /* Cargo.toml in Sources */ = {
+                CA6024848250598A327463EA /* Cargo.toml in Sources */ = {
                     isa = PBXBuildFile;
-                    fileRef = CA601E45F3803EF4668187A5 /* Cargo.toml */;
+                    fileRef = CA60462C82E33EF4668187A5 /* Cargo.toml */;
                     settings = {
                         COMPILER_FLAGS = "--lib"; /* == OTHER_INPUT_FILE_FLAGS */
                     };
                 };
                 
-                CA6031F68CE4FDD0C1372F51 /* Cargo.toml in Sources */ = {
+                CA60248482502E7D8C296CB4 /* Cargo.toml in Sources */ = {
                     isa = PBXBuildFile;
-                    fileRef = CA601E45F3803EF4668187A5 /* Cargo.toml */;
+                    fileRef = CA60462C82E33EF4668187A5 /* Cargo.toml */;
                     settings = {
                         COMPILER_FLAGS = "--lib"; /* == OTHER_INPUT_FILE_FLAGS */
                     };
@@ -27,7 +27,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
-        CA601E45F380AC6C1400ACA8 /* PBXBuildRule */ = {
+        CA60462C82E3AC6C1400ACA8 /* PBXBuildRule */ = {
             isa = PBXBuildRule;
             compilerSpec = com.apple.compilers.proxy.script;
             dependencyFile = "$(DERIVED_FILE_DIR)/$(CARGO_XCODE_TARGET_ARCH)-$(EXECUTABLE_NAME).d";
@@ -45,21 +45,21 @@
 
 /* Begin PBXFileReference section */
         
-        CA60C52D985119A54A9A8D11 /* cdylib */ = {
+        CA60CDD98BBB19A54A9A8D11 /* cdylib */ = {
             isa = PBXFileReference;
             explicitFileType = "compiled.mach-o.dylib";
             includeInIndex = 0;
             name = "dptp_sdk.dylib";
             sourceTree = TARGET_BUILD_DIR;
         };
-        CA60DF07058439D5909BDF30 /* staticlib */ = {
+        CA606BE27EA739D5909BDF30 /* staticlib */ = {
             isa = PBXFileReference;
             explicitFileType = "archive.ar";
             includeInIndex = 0;
             name = "libdptp_sdk_static.a";
             sourceTree = TARGET_BUILD_DIR;
         };
-                CA601E45F3803EF4668187A5 /* Cargo.toml */ = {
+                CA60462C82E33EF4668187A5 /* Cargo.toml */ = {
                     isa = PBXFileReference;
                     lastKnownFileType = text;
                     fileEncoding = 4;
@@ -76,7 +76,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
-        CA601E45F38098AF0B5890DB /* Frameworks */ = {
+        CA60462C82E398AF0B5890DB /* Frameworks */ = {
             isa = PBXGroup;
             children = (
                 ADDEDBA66A6E2,
@@ -96,23 +96,23 @@
                     sourceTree = "<group>";
                 };
 
-        CA601E45F38022869D176AE5 /* Products */ = {
+        CA60462C82E322869D176AE5 /* Products */ = {
             isa = PBXGroup;
             children = (
-                CA60C52D985119A54A9A8D11,
-CA60DF07058439D5909BDF30,
+                CA60CDD98BBB19A54A9A8D11,
+CA606BE27EA739D5909BDF30,
 
             );
             name = Products;
             sourceTree = "<group>";
         };
 
-        CA601E45F380D65BC3C892A8 /* Main */ = {
+        CA60462C82E3D65BC3C892A8 /* Main */ = {
             isa = PBXGroup;
             children = (
-                CA601E45F3803EF4668187A5,
-CA601E45F38022869D176AE5,
-CA601E45F38098AF0B5890DB,
+                CA60462C82E33EF4668187A5,
+CA60462C82E322869D176AE5,
+CA60462C82E398AF0B5890DB,
 
             );
             sourceTree = "<group>";
@@ -121,62 +121,62 @@ CA601E45F38098AF0B5890DB,
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-        CA60C52D9851728EE89ED933 /* dptp_sdk-cdylib */ = {
+        CA60CDD98BBB598A327463EA /* dptp_sdk-cdylib */ = {
             isa = PBXNativeTarget;
-            buildConfigurationList = CA601912D1E1728EE89ED933;
+            buildConfigurationList = CA60EAC8647E598A327463EA;
             buildPhases = (
-                CA60AD22D3D9728EE89ED933 /* Sources */,
-                CA601E45F380AF6EBB7F357C /* Universal Binary lipo */,
+                CA60C7D77C0D598A327463EA /* Sources */,
+                CA60462C82E3AF6EBB7F357C /* Universal Binary lipo */,
             );
             buildRules = (
-                CA601E45F380AC6C1400ACA8 /* PBXBuildRule */,
+                CA60462C82E3AC6C1400ACA8 /* PBXBuildRule */,
             );
             dependencies = (
             );
             name = "dptp_sdk-cdylib";
             productName = "dptp_sdk.dylib";
-            productReference = CA60C52D985119A54A9A8D11;
+            productReference = CA60CDD98BBB19A54A9A8D11;
             productType = "com.apple.product-type.library.dynamic";
         };
-        CA60DF070584FDD0C1372F51 /* dptp_sdk-staticlib */ = {
+        CA606BE27EA72E7D8C296CB4 /* dptp_sdk-staticlib */ = {
             isa = PBXNativeTarget;
-            buildConfigurationList = CA601912D1E1FDD0C1372F51;
+            buildConfigurationList = CA60EAC8647E2E7D8C296CB4;
             buildPhases = (
-                CA60AD22D3D9FDD0C1372F51 /* Sources */,
-                CA601E45F380AF6EBB7F357C /* Universal Binary lipo */,
+                CA60C7D77C0D2E7D8C296CB4 /* Sources */,
+                CA60462C82E3AF6EBB7F357C /* Universal Binary lipo */,
             );
             buildRules = (
-                CA601E45F380AC6C1400ACA8 /* PBXBuildRule */,
+                CA60462C82E3AC6C1400ACA8 /* PBXBuildRule */,
             );
             dependencies = (
             );
             name = "dptp_sdk-staticlib";
             productName = "libdptp_sdk_static.a";
-            productReference = CA60DF07058439D5909BDF30;
+            productReference = CA606BE27EA739D5909BDF30;
             productType = "com.apple.product-type.library.static";
         };
         
 /* End PBXNativeTarget section */
 
-        CA60AD22D3D9728EE89ED933 = {
+        CA60C7D77C0D598A327463EA = {
                     isa = PBXSourcesBuildPhase;
                     buildActionMask = 2147483647;
                     files = (
-                        CA6031F68CE4728EE89ED933
+                        CA6024848250598A327463EA
                     );
                     runOnlyForDeploymentPostprocessing = 0;
                 };
                 
-        CA601912D1E1728EE89ED933 /* cdylib */ = {
+        CA60EAC8647E598A327463EA /* cdylib */ = {
             isa = XCConfigurationList;
             buildConfigurations = (
-                CA608B9C98B8728EE89ED933 /* Release */,
-                CA605FB03A8E728EE89ED933 /* Debug */,
+                CA608AB16082598A327463EA /* Release */,
+                CA60DCDE456B598A327463EA /* Debug */,
             );
             defaultConfigurationIsVisible = 0;
             defaultConfigurationName = Release;
         };
-            CA608B9C98B8728EE89ED933 /* cdylib */ = {
+            CA608AB16082598A327463EA /* cdylib */ = {
                 isa = XCBuildConfiguration;
                 buildSettings = {
                     PRODUCT_NAME = "dptp_sdk";
@@ -188,7 +188,7 @@ CA601E45F38098AF0B5890DB,
                 };
                 name = Release;
             };
-            CA605FB03A8E728EE89ED933 /* cdylib */ = {
+            CA60DCDE456B598A327463EA /* cdylib */ = {
                 isa = XCBuildConfiguration;
                 buildSettings = {
                     PRODUCT_NAME = "dptp_sdk";
@@ -199,25 +199,25 @@ CA601E45F38098AF0B5890DB,
                     DYLIB_COMPATIBILITY_VERSION = "0";
                 };
                 name = Debug;
-            };CA60AD22D3D9FDD0C1372F51 = {
+            };CA60C7D77C0D2E7D8C296CB4 = {
                     isa = PBXSourcesBuildPhase;
                     buildActionMask = 2147483647;
                     files = (
-                        CA6031F68CE4FDD0C1372F51
+                        CA60248482502E7D8C296CB4
                     );
                     runOnlyForDeploymentPostprocessing = 0;
                 };
                 
-        CA601912D1E1FDD0C1372F51 /* staticlib */ = {
+        CA60EAC8647E2E7D8C296CB4 /* staticlib */ = {
             isa = XCConfigurationList;
             buildConfigurations = (
-                CA608B9C98B8FDD0C1372F51 /* Release */,
-                CA605FB03A8EFDD0C1372F51 /* Debug */,
+                CA608AB160822E7D8C296CB4 /* Release */,
+                CA60DCDE456B2E7D8C296CB4 /* Debug */,
             );
             defaultConfigurationIsVisible = 0;
             defaultConfigurationName = Release;
         };
-            CA608B9C98B8FDD0C1372F51 /* staticlib */ = {
+            CA608AB160822E7D8C296CB4 /* staticlib */ = {
                 isa = XCBuildConfiguration;
                 buildSettings = {
                     PRODUCT_NAME = "dptp_sdk_static";
@@ -232,7 +232,7 @@ CA601E45F38098AF0B5890DB,
                 };
                 name = Release;
             };
-            CA605FB03A8EFDD0C1372F51 /* staticlib */ = {
+            CA60DCDE456B2E7D8C296CB4 /* staticlib */ = {
                 isa = XCBuildConfiguration;
                 buildSettings = {
                     PRODUCT_NAME = "dptp_sdk_static";
@@ -248,7 +248,7 @@ CA601E45F38098AF0B5890DB,
                 name = Debug;
             };
 
-        CA601E45F380AF6EBB7F357C /* LipoScript */ = {
+        CA60462C82E3AF6EBB7F357C /* LipoScript */ = {
             name = "Universal Binary lipo";
             isa = PBXShellScriptBuildPhase;
             buildActionMask = 2147483647;
@@ -266,17 +266,17 @@ CA601E45F38098AF0B5890DB,
             shellScript = "# generated with cargo-xcode 1.5.0\n\n            set -eux; cat \"$DERIVED_FILE_DIR/$ARCHS-$EXECUTABLE_NAME.xcfilelist\" | tr \'\\n\' \'\\0\' | xargs -0 lipo -create -output \"$TARGET_BUILD_DIR/$EXECUTABLE_PATH\"\n            if [ ${LD_DYLIB_INSTALL_NAME:+1} ]; then\n                install_name_tool -id \"$LD_DYLIB_INSTALL_NAME\" \"$TARGET_BUILD_DIR/$EXECUTABLE_PATH\"\n            fi\n        ";
         };
 
-        CA601E45F38080E02D6C7F57 = {
+        CA60462C82E380E02D6C7F57 = {
             isa = XCConfigurationList;
             buildConfigurations = (
-                CA60BE94FD043CC16B37690B /* Release */,
-                CA60BE94FD04228BE02872F8 /* Debug */,
+                CA604D4E489B3CC16B37690B /* Release */,
+                CA604D4E489B228BE02872F8 /* Debug */,
             );
             defaultConfigurationIsVisible = 0;
             defaultConfigurationName = Release;
         };
 
-        CA60BE94FD043CC16B37690B = {
+        CA604D4E489B3CC16B37690B = {
             isa = XCBuildConfiguration;
             buildSettings = {
                 
@@ -303,7 +303,7 @@ CA601E45F38098AF0B5890DB,
             name = Release;
         };
 
-        CA60BE94FD04228BE02872F8 = {
+        CA604D4E489B228BE02872F8 = {
             isa = XCBuildConfiguration;
             buildSettings = {
                 
@@ -331,22 +331,22 @@ CA601E45F38098AF0B5890DB,
             name = Debug;
         };
 
-        CA601E45F380E04653AD465F = {
+        CA60462C82E3E04653AD465F = {
             isa = PBXProject;
             attributes = {
                 LastUpgradeCheck = 1300;
                 TargetAttributes = {
-                    CA60C52D9851728EE89ED933 = {
+                    CA60CDD98BBB598A327463EA = {
                         CreatedOnToolsVersion = 9.2;
                         ProvisioningStyle = Automatic;
                     };
-                    CA60DF070584FDD0C1372F51 = {
+                    CA606BE27EA72E7D8C296CB4 = {
                         CreatedOnToolsVersion = 9.2;
                         ProvisioningStyle = Automatic;
                     };
                                     };
             };
-            buildConfigurationList = CA601E45F38080E02D6C7F57;
+            buildConfigurationList = CA60462C82E380E02D6C7F57;
             compatibilityVersion = "Xcode 11.4";
              developmentRegion = en;
             hasScannedForEncodings = 0;
@@ -354,18 +354,18 @@ CA601E45F38098AF0B5890DB,
                     en,
                     Base,
             );
-            mainGroup = CA601E45F380D65BC3C892A8;
-            productRefGroup = CA601E45F38022869D176AE5 /* Products */;
+            mainGroup = CA60462C82E3D65BC3C892A8;
+            productRefGroup = CA60462C82E322869D176AE5 /* Products */;
             projectDirPath = "";
             projectRoot = "";
             targets = (
-                CA60C52D9851728EE89ED933,
-CA60DF070584FDD0C1372F51,
+                CA60CDD98BBB598A327463EA,
+CA606BE27EA72E7D8C296CB4,
 
             );
         };
 
     };
-    rootObject = CA601E45F380E04653AD465F;
+    rootObject = CA60462C82E3E04653AD465F;
 }
     
