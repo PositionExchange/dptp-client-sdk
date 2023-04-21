@@ -1,22 +1,24 @@
 [chain]
 chain_id = 97
-rpc_urls = [    "https://rpc.ankr.com/bsc_testnet_chapel",
+rpc_urls = [
+    "https://rpc.ankr.com/bsc_testnet_chapel",
     "https://data-seed-prebsc-2-s1.binance.org:8545/",
     "https://data-seed-prebsc-1-s2.binance.org:8545/",
     "https://data-seed-prebsc-1-s3.binance.org:8545/",
-    "https://data-seed-prebsc-2-s3.binance.org:8545/"]
+    "https://data-seed-prebsc-2-s3.binance.org:8545/"
+]
 multicall_address = "0x6e5bb1a5ad6f68a8d7d6a5e47750ec15773d6042"
 
 [contract_address]
-vault="0x398B00E3c45b393B3b8453caF349baFc33e16be5"
-plp_manager="0xDF49C2d458892B681331F4EEC0d09A88b283f444"
-plp_token="0x792bA5e9E0Cd15083Ec2f58E434d875892005b91"
+vault = "0x398B00E3c45b393B3b8453caF349baFc33e16be5"
+plp_manager = "0xDF49C2d458892B681331F4EEC0d09A88b283f444"
+plp_token = "0x792bA5e9E0Cd15083Ec2f58E434d875892005b91"
 reward_tracker_fee_plp = "0x50C121Da29CBD8bD96Bdb6c6965F93F09C2Fc598"
 reward_router = "0x806c04c3a79e3bd6dde8a8928b92b58fc61e3ce4"
 
 [[contract_spender]]
-address="0xDF49C2d458892B681331F4EEC0d09A88b283f444"
-name="lp_manager"
+address = "0xDF49C2d458892B681331F4EEC0d09A88b283f444"
+name = "lp_manager"
 
 
 [[tokens]]
@@ -39,7 +41,7 @@ decimals = 18
 name = "Bitcoin"
 is_whitelisted = true
 is_tradeable = true
-quote_precision = 2
+quote_precision = 8
 logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/1.png"
 
 
@@ -75,7 +77,7 @@ decimals = 18
 name = "Ethereum"
 is_whitlisted = true
 is_tradeable = true
-quote_precision = 2
+quote_precision = 8
 logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png"
 
 [[tokens]]
