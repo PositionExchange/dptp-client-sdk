@@ -5,6 +5,7 @@
 .DS_Store
 *.bak
 *.tmp
+.idea/
 
 # Rust
 /target
@@ -15,6 +16,7 @@ Cargo.lock
 # WebAssembly
 wasm/pkg/
 wasm/target/
+wasm/*.xcodeproj
 
 # Flutter and Dart
 flutter/.packages

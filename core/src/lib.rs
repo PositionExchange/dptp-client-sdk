@@ -17,11 +17,12 @@ use crate::contracts::types::{VaultArc, TokensArc};
 use crate::contracts::vault_logic::VaultLogic;
 use contracts::global_fetch::*;
 use ethabi::ethereum_types::U256;
+use serde::{Serialize};
 use log::*;
 
 // use contracts::vault_logic;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Router {
     pub config: config::Config,
     pub vault: Vault,
@@ -295,7 +296,7 @@ impl RouterTrait for Router {
             p!("task 5 start after lock, elapsed: {:?}", startTime.elapsed());
             tokio::join![
                 async {
-                    
+
                     let _config = config.read().await;
                     p!("task 5 start fetch balances");
                     _config.fetch_balances(&tokens).await;

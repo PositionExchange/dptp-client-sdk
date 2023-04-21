@@ -48,7 +48,7 @@ pub struct VaultState {
     pub reserved_amount : Option<HashMap<Address, U256>>
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, Serialize)]
 pub struct Vault {
     pub vault_addr: String,
     pub plp_manager: String,
@@ -193,7 +193,7 @@ impl Vault {
             }).collect();
             // unlock locked
         }
-        
+
         log::print(format!("calls: {:?}", calls).as_str());
         let results = self.chain_arc.lock().await.execute_multicall(calls, include_str!("../../abi/vault.json").to_string(), "tokenConfigurations").await.expect("[Vault] Failed to fetch token configurations");
         log::print(format!("results before lock: {:?}", results).as_str());
@@ -402,7 +402,7 @@ mod tests {
                 vester_plp : "".to_string(),
             }
         ));
-        
+
         return Vault::new(&"0xb79391ad9614f72a737db3e3df38e05e5fc185eb".to_string(), &"0xDF49C2d458892B681331F4EEC0d09A88b283f444".to_string(), &"0x792bA5e9E0Cd15083Ec2f58E434d875892005b91".to_string(), &chain, address);
     }
 
