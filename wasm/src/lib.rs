@@ -156,6 +156,12 @@ impl WasmRouter {
         to_value(&vault_state).unwrap()
     }
 
+    #[wasm_bindgen]
+    pub fn get_contract_address(&mut self) -> JsValue {
+        let contract_address = &self.router.config.contract_address;
+        to_value(&contract_address).unwrap()
+    }
+
     // Buy GLP to token ( exact token to token)
     #[wasm_bindgen]
     pub fn get_buy_glp_from_amount(&mut self, to_amount: &str, token_address: &str) -> JsValue {
