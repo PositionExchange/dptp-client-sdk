@@ -46,6 +46,17 @@ impl Config {
         self.selected_account = Some(account);
     }
 
+    pub fn get_token_by_token_address(&self, token_address: String) -> Option<Token> {
+        let mut token: Option<Token> = None;
+        for t in self.tokens.iter() {
+            if t.address == token_address {
+                token = Some(t.clone());
+                break;
+            }
+        }
+        token
+    }
+
 }
 
 pub fn load_config(chain_id: u64) -> Result<Config, String> {

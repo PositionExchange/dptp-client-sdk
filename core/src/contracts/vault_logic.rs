@@ -1,6 +1,7 @@
 use ethabi::ethereum_types::U256;
+use rust_decimal::Decimal;
 
-use super::{token::Token, vault::VaultState};
+use super::{token::{Token, self}, vault::VaultState};
 use lazy_static::lazy_static;
 
 const USDP_DECIMALS: u32 = 18;
@@ -57,6 +58,15 @@ pub trait VaultLogic {
         // total_token_weights: U256,
     ) -> (U256, u64);
     fn get_plp_price(&self, is_buy: bool) -> U256;
+    fn get_swap_details(&self, token_in: &Token, token_out: &Token, amount_in: U256) -> (U256, u64);
+    fn get_fee_basis_points_swap(
+        &self,
+        is_stable_coin_swap: bool,
+        token_weight: u64,
+        token_usdg_amount: &U256,
+        usdp_delta: &U256,
+        increment: bool,
+    ) -> u32;
 }
 
 
@@ -78,6 +88,38 @@ impl VaultLogic for VaultState {
             usdp_delta,
             self.mint_burn_fee_basis_points,
             U256::from(self.tax_basis_points),
+            increment,
+            &self.usdp_supply,
+            &self.total_token_weights,
+            self.has_dynamic_fees,
+        )
+    }
+
+    fn get_fee_basis_points_swap(
+        &self,
+        is_stable_coin_swap: bool,
+        token_weight: u64,
+        token_usdg_amount: &U256,
+        usdp_delta: &U256,
+        increment: bool,
+    ) -> u32 {
+        let base_bps = if is_stable_coin_swap {
+            self.stable_swap_fee_basis_points
+        } else {
+            self.swap_fee_basis_points
+        };
+        let tax_bps = if is_stable_coin_swap {
+            self.stable_tax_basis_points
+        } else {
+            U256::from(self.tax_basis_points)
+        };
+        
+        get_fee_basis_points(
+            token_weight,
+            token_usdg_amount,
+            usdp_delta,
+            base_bps,
+            U256::from(tax_bps),
             increment,
             &self.usdp_supply,
             &self.total_token_weights,
@@ -172,6 +214,37 @@ impl VaultLogic for VaultState {
             (aum * expand_decimals(1, 18)) / (self.plp_supply * expand_decimals(1, 12))
         }
     }
+
+    fn get_swap_details(&self, token_in: &Token, token_out: &Token, amount_in: U256) -> (U256, u64) {
+        let price_in = token_in.ask_price.expect("Invalid ask price");
+        let price_out = token_out.bid_price.expect("Invalid bid price");
+        let mut amount_out = amount_in * price_in.raw / price_out.raw;  
+        amount_out = adjust_for_decimals(&amount_out, token_in.decimals.into(), token_out.decimals.into());
+
+        let mut usdp_amount = amount_in * price_in.raw / *PRECISION;
+        usdp_amount = adjust_for_decimals(&usdp_amount, token_in.decimals.into(), token_out.decimals.into());
+        let is_stable_coin_swap = token_in.is_stable_coin && token_out.is_stable_coin;
+
+        let fee_bps0 = self.get_fee_basis_points_swap(
+            is_stable_coin_swap,
+            token_in.token_weight.expect("Invalid token weight"),
+            &token_in.usdp_amount.expect("Invalid usdp amount"),
+            &usdp_amount,
+            true,
+        );
+        let fee_bps1 = self.get_fee_basis_points_swap(
+            is_stable_coin_swap,
+            token_out.token_weight.expect("Invalid token weight"),
+            &token_out.usdp_amount.expect("Invalid usdp amount"),
+            &usdp_amount,
+            false
+        );
+        let fee_bps = if fee_bps0 > fee_bps1 { fee_bps0 } else { fee_bps1 };
+
+        amount_out = amount_out * *BASIS_POINTS_DIVISOR / (*BASIS_POINTS_DIVISOR - fee_bps);
+        (amount_out, fee_bps.into())
+    }
+
 }
 
 fn adjust_for_decimals(amount: &U256, div_decimals: u32, mul_decimals: u32) -> U256 {

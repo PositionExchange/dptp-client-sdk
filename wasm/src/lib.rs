@@ -20,7 +20,12 @@ use ethaddr::Address;
 use std::collections::HashMap;
 
 
+/** RETURN TYPE **/
 
+pub struct SwapDetails {
+    amount_out: String,
+    fees_bps: String
+}
 
 
 
@@ -300,6 +305,28 @@ impl WasmRouter {
             &U256::from(usdp_delta),
             increment);
         to_value(&fee_basis_point).unwrap()
+    }
+
+    /// Get the amount of token out for a given amount of token in
+    /// @param token_in The address of the token to swap from
+    /// @param token_out The address of the token to swap to
+    /// @param amount_in The amount of token to swap
+    /// @return The amount of token out and fees following this struct
+    /// {fees: String, amount_out: String}
+    #[wasm_bindgen]
+    pub fn get_swap_details(
+        &mut self,
+        token_in: String,
+        token_out: String,
+        amount_in: String
+    ) -> JsValue {
+        let token_in = self.router.config.get_token_by_token_address(token_in);
+        let token_out = self.router.config.get_token_by_token_address(token_out);
+        let (amount_out, fees_bps) = self.router.vault.state.get_swap_details(token_in, token_out, U256::from(amount_in));
+        to_value(&SwapDetails{
+            amount_out: amount_out.to_string(),
+            fees_bps: fees_bps.to_string()
+        }).unwrap()
     }
 
     #[wasm_bindgen]
