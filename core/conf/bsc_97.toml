@@ -1,11 +1,12 @@
 [chain]
 chain_id = 97
 rpc_urls = [
-    "https://rpc.ankr.com/bsc_testnet_chapel",
-    "https://data-seed-prebsc-2-s1.binance.org:8545/",
-    "https://data-seed-prebsc-1-s2.binance.org:8545/",
-    "https://data-seed-prebsc-1-s3.binance.org:8545/",
-    "https://data-seed-prebsc-2-s3.binance.org:8545/"
+    "https://wandering-billowing-market.bsc-testnet.quiknode.pro/0180a2362b61879f20d7a51b504ad634b17eda4a/",
+    # "https://rpc.ankr.com/bsc_testnet_chapel",
+    # "https://data-seed-prebsc-2-s1.binance.org:8545/",
+    # "https://data-seed-prebsc-1-s2.binance.org:8545/",
+    # "https://data-seed-prebsc-1-s3.binance.org:8545/",
+    # "https://data-seed-prebsc-2-s3.binance.org:8545/"
 ]
 multicall_address = "0x6e5bb1a5ad6f68a8d7d6a5e47750ec15773d6042"
 

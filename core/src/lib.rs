@@ -1,5 +1,8 @@
 pub mod config;
 pub mod contracts;
+mod log;
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use contracts::vault::Vault;
 // use futures::try_join;
@@ -10,6 +13,9 @@ use crate::contracts::token::Token;
 use contracts::global_fetch::*;
 use crate::contracts::vault_logic::VaultLogic;
 use ethabi::{ethereum_types::U256};
+use log::*;
+
+
 
 
 // use contracts::vault_logic;
@@ -91,40 +97,47 @@ impl RouterTrait for Router {
         // let tokens1 = Arc::clone(&tokens);
         // let tokens2 = Arc::clone(&tokens);
         // let startTime = Instant::now();
-
+        print("RUST:: start fetch data");
         // TODO move the lock to the function??
         let _tasks = tokio::join![
             async {
-                println!("task 1 start");
+                print("task 1 start");
                 let mut tokens = tokens.lock().await;
-                println!("task 1 start after lock");
-                self.vault.fetch_token_configuration(&mut tokens).await;
-                // println!("task 1 done, time: {}", startTime.elapsed().as_millis());
+                print("task 1 start after lock");
+                let res = self.vault.fetch_token_configuration(&mut tokens).await;
+                if res.is_err() {
+                    print("task 1 error");
+                    return;
+                }
+                print("task 1 done");
             },
             async {
-                println!("task 2 start");
+                print("task 2 start");
                 let mut tokens = tokens.lock().await;
-                println!("task 2 start after lock");
+                print("task 2 start after lock");
                 self.vault.fetch_vault_info(&mut tokens).await;
-                // println!("task 1 done, time: {}", startTime.elapsed().as_millis());
+                print("task 2 done");
+                // print("task 1 done, time: {}", startTime.elapsed().as_millis());
             },
             async {
-                println!("task 3 start");
+                print("task 3 start");
                 let mut tokens = tokens.lock().await;
-                println!("task 3 start after lock");
+                print("task 3 start after lock");
                 self.vault.fetch_token_prices(&mut tokens).await;
-                // println!("task 2 done, time {}", startTime.elapsed().as_millis());
+                print("task 3 done");
+                // print("task 2 done, time {}", startTime.elapsed().as_millis());
             },
             async {
-                println!("task 4 start");
+                print("task 4 start");
                 let mut tokens = tokens.lock().await;
-                println!("task 4 start after lock");
+                print("task 4 start after lock");
                 self.config.fetch_balances(&mut tokens).await;
                 self.config.fetch_allowance(&mut tokens).await;
-                // println!("task 3 done, time {}", startTime.elapsed().as_millis());
+                print("task 4 done");
+                // print("task 3 done, time {}", startTime.elapsed().as_millis());
             },
         ];
-        println!("tokens full: {:?}", tokens);
+        print(format!("tokens full: {:?}", tokens).as_str());
         // re assign new tokens
         self.config.tokens = tokens.lock().await.to_vec();
 

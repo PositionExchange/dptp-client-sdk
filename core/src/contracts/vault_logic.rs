@@ -223,7 +223,7 @@ impl VaultLogic for VaultState {
 
         let mut usdp_amount = amount_in * price_in.raw / *PRECISION;
         usdp_amount = adjust_for_decimals(&usdp_amount, token_in.decimals.into(), token_out.decimals.into());
-        let is_stable_coin_swap = token_in.is_stable_coin && token_out.is_stable_coin;
+        let is_stable_coin_swap = token_in.is_stable_token.unwrap() && token_out.is_stable_token.unwrap();
 
         let fee_bps0 = self.get_fee_basis_points_swap(
             is_stable_coin_swap,

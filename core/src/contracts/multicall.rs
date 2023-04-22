@@ -5,7 +5,7 @@ use ethers::{
     types::{Address, Bytes, U256},
 };
 use std::sync::Arc;
-use crate::config::Chain;
+use crate::{config::Chain, log};
 use async_trait::async_trait;
 use rand::Rng;
 
@@ -32,15 +32,18 @@ impl ChainMulticallTrait for Chain {
     }
     async fn execute_multicall_raw(&self, calls: Vec<(Address, Bytes)>) -> Result<Vec<Bytes>, String>{
         let mut rng = rand::thread_rng();
-        let random_index = rng.gen_range(0..4);
+        // random rpc
+        let random_index =if self.rpc_urls.len() > 1  {rng.gen_range(0..(self.rpc_urls.len() - 1))} else {0};
 
-        println!("random_index {}", random_index);
+        log::print(format!("random_index {}, rpcs: {}", random_index, self.rpc_urls.len()).as_str());
 
         let provider = Provider::<Http>::try_from(self.rpc_urls[random_index].clone()).expect("invalid rpc url, check your config");
         let client = Arc::new(provider.clone());
         let address: Address = self.multicall_address.parse().expect("invalid multicall address, check your config");
         let multicall = Multicall::new(address, client);
+        log::print(format!("multicall address {}, start calling", address.to_string()).as_str());
         let (_block_number, return_data) = multicall.aggregate(calls).call().await.expect("Failed to execute multicall");
+        log::print(format!("multicall done {}", return_data.len()).as_str());
         Ok(return_data)
     }
 }

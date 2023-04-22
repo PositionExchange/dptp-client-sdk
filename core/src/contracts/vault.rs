@@ -4,6 +4,7 @@ use ethers::types::{Address, Bytes, U256};
 use serde::Serialize;
 use tiny_keccak::{Keccak, Hasher};
 use crate::config::Chain;
+use crate::log;
 use super::token::{Token, Price};
 use super::multicall::*;
 use ethabi::Token as AbiToken;
@@ -162,12 +163,15 @@ impl Vault {
     }
 
     pub async fn fetch_token_configuration(&self, tokens: &mut Vec<Token>) -> anyhow::Result<()> {
+        log::print("srtart fetch_token_configuration");
         // let mut tokens = tokens.lock().await;
         let calls: Vec<(Address, Bytes)> = tokens.iter().map(|token| {
             let (vault_addr, data) = token.build_get_vault_token_configuration_call(&self.vault_addr);
             (vault_addr, data)
         }).collect();
+        log::print(format!("calls: {:?}", calls).as_str());
         let results = self.chain.execute_multicall(calls, include_str!("../../abi/vault.json").to_string(), "tokenConfigurations").await.expect("[Vault] Failed to fetch token configurations");
+        log::print(format!("results: {:?}", results).as_str());
         for (token, result) in tokens.iter_mut().zip(results) {
             if let [is_whitelisted, _token_decimals, is_stable_token, is_shortable_token, min_profit_basis_points, token_weight, max_usdp_amount] = result.as_slice() {
                 token.update_token_configuration(

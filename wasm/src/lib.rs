@@ -1,10 +1,11 @@
 use std::ops::Deref;
 use std::str::FromStr;
+use tokio::sync::Mutex;
 use wasm_bindgen::prelude::*;
 use serde_wasm_bindgen::{to_value, from_value};
 use serde::{Serialize, Deserialize};
 use core::{*};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc};
 use console_error_panic_hook;
 use ethabi::ethereum_types::U256;
 use wasm_bindgen::__rt::IntoJsResult;
@@ -22,6 +23,7 @@ use std::collections::HashMap;
 
 /** RETURN TYPE **/
 
+#[derive(Serialize, Deserialize)]
 pub struct SwapDetails {
     amount_out: String,
     fees_bps: String
@@ -32,6 +34,7 @@ pub struct SwapDetails {
 #[wasm_bindgen]
 pub struct WasmRouter {
     router: Router,
+    lock: Arc<Mutex<u64>>,
 }
 
 // Note: this is the example to custom export struct to js
@@ -80,6 +83,7 @@ impl WasmRouter {
 
         WasmRouter {
             router,
+            lock: Arc::new(Mutex::new(0)),
         }
     }
 
@@ -126,16 +130,20 @@ impl WasmRouter {
 
         log::info!("check set_account {}", account.clone());
 
-
-
         if account.len() > 0 {
             log::info!("into set account {}", account.clone());
             self.router.set_account(account);
         }
+        log::info!("after set_account, start fetch data");
 
-        self.router.fetch_data().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("fetch data failure");
+        let mut lock = self.lock.lock().await;
+        let res1 = self.router.fetch_data().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("fetch data failure");
+        log::info!("fetch data done");
         self.router.vault.init_vault_state().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("init vault state failure");
+        log::info!("init vault state done");
         self.router.calculate_price_plp();
+        *lock += 1;
+        log::info!("fetch async done");
 
     }
 
@@ -320,9 +328,9 @@ impl WasmRouter {
         token_out: String,
         amount_in: String
     ) -> JsValue {
-        let token_in = self.router.config.get_token_by_token_address(token_in);
-        let token_out = self.router.config.get_token_by_token_address(token_out);
-        let (amount_out, fees_bps) = self.router.vault.state.get_swap_details(token_in, token_out, U256::from(amount_in));
+        let token_in = self.router.config.get_token_by_token_address(token_in).expect("token_in not found");
+        let token_out = self.router.config.get_token_by_token_address(token_out).expect("token_out not found");
+        let (amount_out, fees_bps) = self.router.vault.state.get_swap_details(&token_in, &token_out, U256::from_dec_str(&amount_in.to_string()).unwrap());
         to_value(&SwapDetails{
             amount_out: amount_out.to_string(),
             fees_bps: fees_bps.to_string()
