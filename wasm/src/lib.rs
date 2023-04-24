@@ -26,6 +26,7 @@ use std::collections::HashMap;
 #[derive(Serialize, Deserialize)]
 pub struct SwapDetails {
     amount_out: String,
+    fee_amount: String,
     fees_bps: String
 }
 
@@ -320,7 +321,7 @@ impl WasmRouter {
     /// @param token_out The address of the token to swap to
     /// @param amount_in The amount of token to swap
     /// @return The amount of token out and fees following this struct
-    /// {fees: String, amount_out: String}
+    /// {fees: String, fee_amount: String, amount_out: String}
     #[wasm_bindgen]
     pub fn get_swap_details(
         &mut self,
@@ -330,9 +331,10 @@ impl WasmRouter {
     ) -> JsValue {
         let token_in = self.router.config.get_token_by_token_address(token_in).expect("token_in not found");
         let token_out = self.router.config.get_token_by_token_address(token_out).expect("token_out not found");
-        let (amount_out, fees_bps) = self.router.vault.state.get_swap_details(&token_in, &token_out, U256::from_dec_str(&amount_in.to_string()).unwrap());
+        let (amount_out, fee_amount, fees_bps) = self.router.vault.state.get_swap_details(&token_in, &token_out, U256::from_dec_str(&amount_in.to_string()).unwrap());
         to_value(&SwapDetails{
             amount_out: amount_out.to_string(),
+            fee_amount: fee_amount.to_string(),
             fees_bps: fees_bps.to_string()
         }).unwrap()
     }

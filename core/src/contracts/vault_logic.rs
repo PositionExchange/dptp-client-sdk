@@ -1,6 +1,8 @@
 use ethabi::ethereum_types::U256;
 use rust_decimal::Decimal;
 
+use crate::log;
+
 use super::{token::{Token, self}, vault::VaultState};
 use lazy_static::lazy_static;
 
@@ -58,7 +60,7 @@ pub trait VaultLogic {
         // total_token_weights: U256,
     ) -> (U256, u64);
     fn get_plp_price(&self, is_buy: bool) -> U256;
-    fn get_swap_details(&self, token_in: &Token, token_out: &Token, amount_in: U256) -> (U256, u64);
+    fn get_swap_details(&self, token_in: &Token, token_out: &Token, amount_in: U256) -> (U256, U256, u64);
     fn get_fee_basis_points_swap(
         &self,
         is_stable_coin_swap: bool,
@@ -215,7 +217,7 @@ impl VaultLogic for VaultState {
         }
     }
 
-    fn get_swap_details(&self, token_in: &Token, token_out: &Token, amount_in: U256) -> (U256, u64) {
+    fn get_swap_details(&self, token_in: &Token, token_out: &Token, amount_in: U256) -> (U256, U256, u64) {
         let price_in = token_in.ask_price.expect("Invalid ask price");
         let price_out = token_out.bid_price.expect("Invalid bid price");
         let mut amount_out = amount_in * price_in.raw / price_out.raw;  
@@ -241,8 +243,10 @@ impl VaultLogic for VaultState {
         );
         let fee_bps = if fee_bps0 > fee_bps1 { fee_bps0 } else { fee_bps1 };
 
-        amount_out = amount_out * *BASIS_POINTS_DIVISOR / (*BASIS_POINTS_DIVISOR - fee_bps);
-        (amount_out, fee_bps.into())
+        let amount_out_after_fee = amount_out * (*BASIS_POINTS_DIVISOR - fee_bps) / (*BASIS_POINTS_DIVISOR);
+        log::print(format!("amount_out: {}, amount_out_after_fee: {}", amount_out, amount_out_after_fee).as_str());
+        let fee_amount = amount_out - amount_out_after_fee;
+        (amount_out, fee_amount, fee_bps.into())
     }
 
 }
