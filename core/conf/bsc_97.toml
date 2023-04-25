@@ -11,15 +11,21 @@ rpc_urls = [
 multicall_address = "0x6e5bb1a5ad6f68a8d7d6a5e47750ec15773d6042"
 
 [contract_address]
-vault = "0x398B00E3c45b393B3b8453caF349baFc33e16be5"
+vault = "0x6c580ed53a3eaa02841A9E8E360Bc6C37F469DBC"
 plp_manager = "0xDF49C2d458892B681331F4EEC0d09A88b283f444"
 plp_token = "0x792bA5e9E0Cd15083Ec2f58E434d875892005b91"
 reward_tracker_fee_plp = "0x50C121Da29CBD8bD96Bdb6c6965F93F09C2Fc598"
-reward_router = "0x806c04c3a79e3bd6dde8a8928b92b58fc61e3ce4"
+reward_router = "0x51E97bb1e3fc16fEC95d02D301D0917304da3dc4"
+vester_plp = "0x1eD5051bbFA6B80f30D50D14761634eBb770f024"
+futurx_gateway = "0x7f8cd121aedd5249a03328ce792c6fc5a7f224ce"
 
 [[contract_spender]]
 address = "0xDF49C2d458892B681331F4EEC0d09A88b283f444"
 name = "lp_manager"
+
+[[contract_spender]]
+address = "0x7f8cd121aedd5249a03328ce792c6fc5a7f224ce"
+name = "futurx_gateway"
 
 
 [[tokens]]

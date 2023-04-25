@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::ops::Deref;
 use std::str::FromStr;
 use tokio::sync::Mutex;
@@ -14,11 +15,14 @@ use core::contracts::token::Token;
 use rust_decimal::prelude::Decimal;
 use std::panic;
 use wasm_logger::*;
+// use std::{cell::RefCell, rc::Rc};
+
 
 use core::contracts::vault_logic;
 // use core::contracts::Va;
 use ethaddr::Address;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 
 /** RETURN TYPE **/
@@ -135,6 +139,7 @@ impl WasmRouter {
             log::info!("into set account {}", account.clone());
             self.router.set_account(account);
         }
+        // self.router.
         log::info!("after set_account, start fetch data");
 
         let mut lock = self.lock.lock().await;
@@ -166,7 +171,7 @@ impl WasmRouter {
     // Note: Need to call init_vault_state first
     #[wasm_bindgen]
     pub fn get_vault_state(&mut self) -> JsValue {
-        let vault_state = self.router.vault.state;
+        let vault_state = self.router.vault.state.clone();
         to_value(&vault_state).unwrap()
     }
 

@@ -129,6 +129,24 @@ impl Token {
         (token, data)
     }
 
+
+
+    pub fn build_get_staked_amount(&self, account: &String, reward_tracker : &String) -> (Address, Bytes) {
+        let account: Address = account.parse().expect("Invalid account");
+        let token: Address = reward_tracker.parse().expect("Invalid account");;
+        let function_name = "pairAmounts";
+        let reward_tracker_abi = include_str!("../../abi/reward_tracker.json");
+        let contract = Contract::load(reward_tracker_abi.as_bytes()).unwrap();
+        let function = contract.function(function_name).unwrap();
+        let data: Bytes = function.encode_input(&[
+            ethabi::Token::Address(account)
+        ])
+            .unwrap().into();
+        (token, data)
+    }
+
+
+
     pub fn build_get_vault_token_configuration_call(&self, vault_address: &String) -> (Address, Bytes) {
         let function_name = "tokenConfigurations".to_string();
         return self._build_vault_contract_call(vault_address, &function_name);

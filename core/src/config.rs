@@ -33,7 +33,10 @@ pub struct ContractAddress {
     pub vault: String,
     pub plp_manager: String,
     pub plp_token: String,
-    pub reward_router: String
+    pub reward_router: String,
+    pub futurx_gateway : String,
+    pub reward_tracker_fee_plp : String,
+    pub vester_plp :String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -63,7 +66,16 @@ pub fn load_config(chain_id: u64) -> Result<Config, String> {
     // TODO: This macro in Rust allows you to include the contents of a file as a string in your compiled binary at compile time.
     // So we need change to fetch from server so that we can remote config the data, especially in
     // in mobile apps
-    let config_str = include_str!("../conf/bsc_97.toml");
+
+    let mut config_str = include_str!("../conf/bsc_97.toml");
+
+    match chain_id {
+        97 => config_str = include_str!("../conf/bsc_97.toml"),
+        56 => config_str = include_str!("../conf/bsc_56.toml"),
+        421613 => config_str = include_str!("../conf/arb_421613.toml"),
+        42161 => config_str = include_str!("../conf/arb_42161.toml"),
+        _ => {}
+    }
     let config: Config = toml::from_str(&config_str).expect("Failed to parse TOML");
     Ok(config)
 }
