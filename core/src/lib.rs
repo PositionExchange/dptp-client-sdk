@@ -182,6 +182,50 @@ mod tests {
         println!("reward_router {}", router.config.contract_address.reward_router);
     }
 
+    #[tokio::test]
+    async fn it_works_arb() {
+        // 1. load config
+        let mut router = Router::new();
+        router.initilize(421613).unwrap();
+
+        println!("spender {:?}", router.config.contract_spender);
+        router.vault.init_vault_state().await.unwrap();
+
+
+        // 2. set account
+        router.set_account("0xaC7c1a2fFb8b3f3bEa3e6aB4bC8b1A2Ff4Bb4Aa4".to_string());
+        assert_eq!(router.config.selected_account, Some("0xaC7c1a2fFb8b3f3bEa3e6aB4bC8b1A2Ff4Bb4Aa4".to_string()));
+
+        router.fetch_data().await.expect("fetch data failed");
+
+
+        println!("reward_router {}", router.config.contract_address.reward_router);
+    }
+
+    #[tokio::test]
+    async fn should_fetch_token_prices() {
+        let mut router = Router::new();
+        router.initilize(97).unwrap();
+        println!("start init_vault_state");
+        router.vault.init_vault_state().await.unwrap();
+
+        router.set_account("0xDfbE56f4e2177a498B5C49C7042171795434e7D1".to_string());
+        println!("done init_vault_state");
+
+
+
+        println!("vault state {:?}", router.vault.state);
+
+        router.calculate_price_plp();
+        // println!("price plp buy {}", router.price_plp_buy.unwrap().as_u32());
+        router.fetch_data().await.expect("fetch data failed");
+
+
+        let tokens = router.load_tokens();
+
+        // println!("Loaded tokens: {:?}", tokens);
+    }
+
     #[test]
     fn should_call_load_config_before_load_tokens() {
         let router = Router::new();

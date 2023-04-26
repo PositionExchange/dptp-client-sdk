@@ -1,4 +1,5 @@
 use std::{ops::Div, str::FromStr, time::Duration};
+use std::collections::HashMap;
 
 use ethers::types::{Address, Bytes, U256};
 use serde::Serialize;
@@ -9,7 +10,7 @@ use super::token::{Token, Price};
 use super::multicall::*;
 use ethabi::Token as AbiToken;
 
-#[derive(Default, Debug, Serialize, Clone, Copy)]
+#[derive(Default, Debug, Serialize, Clone)]
 pub struct VaultState {
     pub usdp_address: Address,
     pub fee_basis_points: u32,
@@ -35,6 +36,9 @@ pub struct VaultState {
     pub borrowing_rate_interval: Duration,
     pub borrowing_rate_factor: U256,
     pub stable_borrowing_rate_factor: U256,
+
+    pub staked_plp: Option<HashMap<Address, U256>>,
+    pub reserved_amount : Option<HashMap<Address, U256>>
 }
 
 #[derive(Default, Debug)]
@@ -158,6 +162,9 @@ impl Vault {
         } else {
             anyhow::bail!("Invalid vault state return data (may be invalid ABI), check Vault smart contract");
         }
+
+        self.state.reserved_amount = Some(HashMap::new());
+        self.state.staked_plp = Some(HashMap::new());
         println!("call results {:?}", results);
         Ok(())
     }
@@ -221,38 +228,56 @@ impl Vault {
     pub async fn fetch_token_prices(&self, tokens: &mut Vec<Token>) -> anyhow::Result<()> {
         // let mut tokens = tokens.lock().await;
         // fetch ask price
-
         let fetch_ask_price_calls: Vec<(Address, Bytes)> = tokens.iter()
             .filter(|token| token.is_tradeable == Some(true))
             .map(|token| {
-            let (vault_addr, data) = token.build_get_ask_price_call(&self.vault_addr);
-            (vault_addr, data)
-        }).collect();
+                let (vault_addr, data) = token.build_get_ask_price_call(&self.vault_addr);
+                (vault_addr, data)
+            }).collect();
+
+        let results_ask_price = self.chain.execute_multicall(fetch_ask_price_calls, include_str!("../../abi/vault.json").to_string(), "getAskPrice").await.expect("[Vault] Failed to fetch ask prices");
+
 
         // fetch bid price
         let fetch_bid_price_calls: Vec<(Address, Bytes)> = tokens.iter()
             .filter(|token| token.is_tradeable == Some(true))
             .map(|token| {
-            let (vault_addr, data) = token.build_get_bid_price_call(&self.vault_addr);
-            (vault_addr, data)
-        }).collect();
+                let (vault_addr, data) = token.build_get_bid_price_call(&self.vault_addr);
+                (vault_addr, data)
+            }).collect();
+        let results_bid_price = self.chain.execute_multicall(fetch_bid_price_calls, include_str!("../../abi/vault.json").to_string(), "getBidPrice").await.expect("[Vault] Failed to fetch ask prices");
 
-        let call_len = fetch_ask_price_calls.len();
-        let mut merged_calls = fetch_bid_price_calls.clone();
-        merged_calls.extend(fetch_ask_price_calls);
-        let results = self.chain.execute_multicall(merged_calls, include_str!("../../abi/vault.json").to_string(), "getAskPrice").await.expect("[Vault] Failed to fetch ask prices");
-        let chunk_reulsts = results.chunks(call_len);
-        let ask_prices = chunk_reulsts.clone().next().expect("Failed to get ask prices")
-            .into_iter().map(_format_price).collect::<Vec<_>>();
-        let bid_prices = chunk_reulsts.clone().next().expect("Failed to get bid prices")
-            .into_iter().map(_format_price).collect::<Vec<_>>();
-        for (token, ask_price) in tokens.iter_mut().zip(ask_prices) {
-            token.ask_price = Some(ask_price);
-            token.min_price = Some(ask_price);
+        //
+        // let call_len = fetch_ask_price_calls.len();
+        // let mut merged_calls = fetch_bid_price_calls.clone();
+        // merged_calls.extend(fetch_ask_price_calls);
+        // let results = self.chain.execute_multicall(merged_calls, include_str!("../../abi/vault.json").to_string(), "getAskPrice").await.expect("[Vault] Failed to fetch ask prices");
+        // let chunk_reulsts = results.chunks(call_len);
+        // let ask_prices = chunk_reulsts.clone().next().expect("Failed to get ask prices")
+        //     .into_iter().map(_format_price).collect::<Vec<_>>();
+        // let bid_prices = chunk_reulsts.clone().next().expect("Failed to get bid prices")
+        //     .into_iter().map(_format_price).collect::<Vec<_>>();
+        // for (token, ask_price) in tokens.iter_mut().zip(ask_prices) {
+        //     token.ask_price = Some(ask_price);
+        //     token.min_price = Some(ask_price);
+        // }
+        // for (token, bid_price) in tokens.iter_mut().zip(bid_prices) {
+        //     token.bid_price = Some(bid_price);
+        //     token.max_price = Some(bid_price);
+        // }
+
+        for (token, ask_price) in tokens.iter_mut().zip(results_ask_price) {
+
+            let ask_price_formatted = _format_price(&ask_price);
+            token.ask_price = Some(ask_price_formatted);
+            token.min_price = Some(ask_price_formatted);
         }
-        for (token, bid_price) in tokens.iter_mut().zip(bid_prices) {
-            token.bid_price = Some(bid_price);
-            token.max_price = Some(bid_price);
+        for (token, bid_price) in tokens.iter_mut().zip(results_bid_price) {
+            let bid_price_formatted = _format_price(&bid_price);
+
+            println!("**********done fetch_token_prices********");
+            token.bid_price = Some(bid_price_formatted);
+            token.max_price = Some(bid_price_formatted);
         }
 
         println!("**********done fetch_token_prices********");
