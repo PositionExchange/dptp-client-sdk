@@ -6,6 +6,8 @@ use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 use rust_decimal::prelude::Decimal;
 
+use crate::{utils::get_encode_address_and_params, log};
+
 const PRICE_DECIMALS: u32 = 30;
 
 #[derive(Debug, Copy, Deserialize, Serialize, Clone, Default, PartialEq, PartialOrd)]
@@ -15,6 +17,15 @@ pub struct Price {
 }
 
 impl Price {
+    pub fn zero() -> Self {
+        Price { raw: U256::zero(), parsed: Decimal::ZERO }
+    }
+    pub fn new(parsed: Decimal) -> Self {
+        // convert raw from parsed
+        // raw = raw ** 10**30
+        let raw = U256::from_dec_str(&parsed.to_string()).unwrap() * U256::from_dec_str(&format!("{}", 10u128.pow(PRICE_DECIMALS))).unwrap();
+        Price { raw, parsed }
+    }
     pub fn new_from_eth_token(raw: &ethabi::Token) -> Self {
         let u256_price = raw.clone().into_uint().expect("Failed to parse price");
         let parsed_price = Decimal::from_str(&ethers::utils::format_units(u256_price, PRICE_DECIMALS).expect("failed to pare ether units")).unwrap();
@@ -61,6 +72,17 @@ pub struct Token {
     pub fee_reserves : Option<U256>,
     pub pool_amounts :Option<U256>,
     pub reserved_amounts :Option<U256>,
+    pub available_amount :Option<U256>,
+
+
+    pub max_global_long_size :Option<U256>,
+    pub max_global_short_size :Option<U256>,
+    // Total global long or short size in USD
+    pub global_long_size :Option<U256>,
+    pub global_short_size :Option<U256>,
+    // Available liquidity to open long or short, in USD
+    pub available_long_size :Option<Decimal>,
+    pub available_short_size: Option<Decimal>,
 
     pub allowances: Option<HashMap<Address, HashMap<Address, U256>>>,
     pub balances: Option<HashMap<Address, Decimal>>,
@@ -101,6 +123,15 @@ impl Token {
             fee_reserves : None,
             pool_amounts :None,
             reserved_amounts :None,
+            available_amount :None,
+
+
+            max_global_long_size: None,
+            max_global_short_size: None,
+            global_long_size: None,
+            global_short_size: None,
+            available_long_size: None,
+            available_short_size: None,
         }
     }
     pub fn build_balance_of_call(&self, account: &String) -> (Address, Bytes) {
@@ -142,6 +173,17 @@ impl Token {
         ])
             .unwrap().into();
         (token, data)
+    }
+
+    /**
+    * This function will build the call to the vault contract to get the token configuration
+    * Eg: contract.usdp_amount(token_address)
+    * Pass: contract_address and "usdp_amount" as the fn_name
+    */
+    pub fn build_get_token_variable(&self, contract_address: &String, fn_name: &str) -> (Address, Bytes) {
+        let fn_sig = format!("{}(address)", fn_name);
+        let token_address: Address = self.address.parse().expect("Invalid token address");
+        get_encode_address_and_params(contract_address, fn_sig.as_str(), &[ethabi::Token::Address(token_address)])
     }
 
     pub fn build_get_vault_token_configuration_call(&self, vault_address: &String) -> (Address, Bytes) {
@@ -199,7 +241,49 @@ impl Token {
         self.fee_reserves = Some(fee_reserves);
         self.pool_amounts = Some(pool_amounts);
         self.reserved_amounts = Some(reserved_amounts);
+        self.available_amount = Some(pool_amounts - reserved_amounts);
+    }
 
+    pub fn update_available_long_short_amounts(
+        &mut self,
+        max_global_long_size: U256,
+        max_global_short_size: U256,
+        guaranteed_usd: U256,
+        global_short_size: U256
+    ) {
+        self.max_global_long_size = Some(max_global_long_size);
+        self.max_global_short_size = Some(max_global_short_size);
+        self.global_long_size = Some(guaranteed_usd);
+        self.global_short_size = Some(global_short_size);
+        // available long = max_global_long_size - global_long_size
+        let ZERO = U256::from(0);
+
+        let available_usd = self.get_available_usd();
+        // if max_global_long_size is configured
+        if max_global_long_size > guaranteed_usd {
+            let remaining_long_size = max_global_long_size - guaranteed_usd;
+            self.available_long_size = Some(format_units(
+                if remaining_long_size < available_usd {remaining_long_size} else {available_usd},
+                self.decimals as u32
+            ).expect("fall parse units"));
+        }else{
+            self.available_long_size = Some(format_units(available_usd, self.decimals as u32).expect("fall parse units"));
+        }
+        if max_global_short_size > ZERO {
+            if max_global_short_size > global_short_size {
+                self.available_short_size = Some(format_units(max_global_short_size - global_short_size, self.decimals as u32).expect("fall parse units"));
+            }
+        }
+    }
+
+
+    fn get_available_usd(&self) -> U256 {
+        crate::p!("get available usd, self {:?}", self);
+        if self.is_stable_token.unwrap() {
+            self.pool_amounts.expect("Invalid pool amount") * self.bid_price.unwrap_or(Price::zero()).raw / 10_u128.pow(PRICE_DECIMALS as u32)
+        } else {
+            self.available_amount.expect("invalid available_amount") * self.bid_price.unwrap_or(Price::zero()).raw / 10_u128.pow(PRICE_DECIMALS as u32)
+        }
     }
 
     pub fn update_balance(&mut self, account: &String, balance: U256) {
@@ -260,7 +344,7 @@ impl Token {
     }
 
     pub fn calculate_available_liquidity(&mut self){
-        if self.is_tradeable.is_some() {
+        if self.is_tradeable.unwrap_or(false) {
             self.available_liquidity = Option::from(self.max_usdp_amount.unwrap() - self.usdp_amount.unwrap());
         }
     }
@@ -271,14 +355,33 @@ impl Token {
 
 }
 
+fn format_units(value: U256, decimals: u32) -> anyhow::Result<Decimal> {
+    let value = ethers::utils::format_units(value, decimals)?;
+    let value = Decimal::from_str(&value)?;
+    Ok(value)
+}
+
 
 #[cfg(test)]
 mod tests {
     use ethers::utils::hex;
+    use rust_decimal_macros::dec;
     use super::*;
 
     fn create_mock_token() -> Token {
         Token::new(97, "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984", "Uniswap", "UNI", 18, "")
+    }
+
+    #[test]
+    fn test_get_available_usd() {
+        let mut token = create_mock_token();
+        token.available_amount = Some(U256::from(1000));
+        token.bid_price = Some(Price::new(dec!(10)));
+        token.is_stable_token = Some(false);
+        assert_eq!(token.get_available_usd(), U256::from(10_000));
+        token.is_stable_token = Some(true);
+        token.pool_amounts = Some(U256::from(10000));
+        assert_eq!(token.get_available_usd(), U256::from(10_0000));
     }
 
     #[test]

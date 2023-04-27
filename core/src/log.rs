@@ -19,5 +19,5 @@ pub fn print(s: &str) {
 
 #[macro_export]
 macro_rules! p {
-    ($($t:tt)*) => (print(&format_args!($($t)*).to_string()));
+    ($($t:tt)*) => (crate::print(&format_args!($($t)*).to_string()));
 }

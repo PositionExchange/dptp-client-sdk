@@ -36,7 +36,8 @@ pub struct ContractAddress {
     pub reward_router: String,
     pub futurx_gateway : String,
     pub reward_tracker_fee_plp : String,
-    pub vester_plp :String,}
+    pub vester_plp :String,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ContractSpenderAddress {

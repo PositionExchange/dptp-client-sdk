@@ -171,7 +171,7 @@ impl WasmRouter {
     // Note: Need to call init_vault_state first
     #[wasm_bindgen]
     pub fn get_vault_state(&self) -> JsValue {
-        let vault_state = self.router.borrow().vault.state;
+        let vault_state = self.router.borrow().vault.state.clone();
         to_value(&vault_state).unwrap()
     }
 

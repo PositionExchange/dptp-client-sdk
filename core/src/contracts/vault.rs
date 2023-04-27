@@ -1,11 +1,13 @@
-use std::{ops::Div, str::FromStr, time::Duration};
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::{time::Duration};
 use std::collections::HashMap;
 
 use ethers::types::{Address, Bytes, U256};
 use serde::Serialize;
-use tiny_keccak::{Keccak, Hasher};
-use crate::config::Chain;
+use crate::config::{Chain, ContractAddress};
 use crate::log;
+use crate::utils::*;
 use super::token::{Token, Price};
 use super::multicall::*;
 use ethabi::Token as AbiToken;
@@ -48,11 +50,12 @@ pub struct Vault {
     pub plp_token: String,
     pub chain: Chain,
     pub state: VaultState,
+    contract_address: Rc<RefCell<ContractAddress>>,
 }
 
 impl Vault {
-    pub fn new(vault_addr: &String, plp_manager: &String, plp_token: &String, chain: &Chain) -> Self {
-        Self { vault_addr: vault_addr.to_string(), plp_token: plp_token.to_string(), plp_manager: plp_manager.to_string(), chain: chain.clone(), state: VaultState::default() }
+    pub fn new(vault_addr: &String, plp_manager: &String, plp_token: &String, chain: &Chain, contract_address: Rc<RefCell<ContractAddress>>) -> Self {
+        Self { vault_addr: vault_addr.to_string(), plp_token: plp_token.to_string(), plp_manager: plp_manager.to_string(), chain: chain.clone(), state: VaultState::default(), contract_address }
     }
 
     pub async fn init_vault_state(&mut self) -> anyhow::Result<()> {
@@ -211,13 +214,52 @@ impl Vault {
                 feeReserves,
                 usdpAmounts,
                 poolAmounts,
-                reservedAmounts] = result.as_slice() {
+                reservedAmounts
+            ] = result.as_slice() {
                 token.update_vault_info(
                     usdpAmounts.clone().into_uint().expect("Fail to parse usdp amount"),
                     feeReserves.clone().into_uint().expect("Fail to parse feeReserves"),
                     poolAmounts.clone().into_uint().expect("Fail to parse poolAmounts"),
                     reservedAmounts.clone().into_uint().expect("Fail to parse reservedAmounts"),
                 );
+            } else {
+                anyhow::bail!("Invalid token configuration return data (may be invalid ABI), check vault.tokenConfigurations(address token) sm function");
+            }
+        }
+        Ok(())
+    }
+
+    pub async fn fetch_multi_vault_token_variables(&mut self, tokens: &mut Vec<Token>) -> anyhow::Result<()> {
+        let vault_calls_fns = ["guaranteedUsd", "globalShortSizes"];
+        let user_gateway_calls_fns = ["maxGlobalLongSizes", "maxGlobalShortSizes"];
+        let user_gatway_addr = self.contract_address.borrow().futurx_gateway.clone();
+        println!("user_gatway_addr: {:?}", user_gatway_addr);
+        let calls: Vec<Vec<(Address, Bytes)>> = tokens.iter().map(|token| {
+            let mut calls: Vec<(Address, Bytes)> = Vec::new();
+            let vault_calls: Vec<(Address, Bytes)> = vault_calls_fns.iter().map(|call_fn| token.build_get_token_variable(&self.vault_addr, call_fn)).collect();
+            calls.extend(vault_calls);
+            let user_gateway_calls: Vec<(Address, Bytes)> = user_gateway_calls_fns.iter().map(|call_fn| token.build_get_token_variable(&user_gatway_addr, call_fn)).collect();
+            calls.extend(user_gateway_calls);
+            calls
+        }).collect();
+        let flatten_calls: Vec<(Address, Bytes)> = calls.into_iter().flatten().collect();
+        let results = self.chain.execute_multicall_raw(flatten_calls).await.expect("[Vault] Failed to fetch multi vault token variables");
+        let decode_results: Vec<_> = results.into_iter().map(
+            |raw| ethabi::decode(&[ethabi::ParamType::Uint(256)], &raw).unwrap()
+        ).collect();
+        // chunk decode results into call_fns.len
+        let chunked_decode_results = decode_results.chunks(vault_calls_fns.len() + user_gateway_calls_fns.len());
+        println!("chunks {:?}", chunked_decode_results);
+        for (token, chunked_decode_result) in tokens.iter_mut().zip(chunked_decode_results) {
+            if let [guaranteed_usd, global_short_sizes, max_global_long_sizes, max_global_short_sizes] = chunked_decode_result {
+                let guaranteed_usd = guaranteed_usd[0].clone().into_uint().expect("Fail to parse guaranteed_usd");
+                let global_short_sizes = global_short_sizes[0].clone().into_uint().expect("Fail to parse global_short_sizes");
+                let max_global_long_sizes = max_global_long_sizes[0].clone().into_uint().expect("Fail to parse global_short_sizes");
+                let max_global_short_sizes = max_global_short_sizes[0].clone().into_uint().expect("Fail to parse global_short_sizes");
+
+                crate::p!("token address {}, guaranteed_usd {:?}, global_short_sizes {:?}, max_global_long_sizes {}, max_global_short_sizes {}", token.address, guaranteed_usd, global_short_sizes, max_global_long_sizes, max_global_short_sizes);
+                crate::p!("update tokens {:?}", token);
+                token.update_available_long_short_amounts(max_global_long_sizes, max_global_short_sizes, guaranteed_usd, global_short_sizes)
             } else {
                 anyhow::bail!("Invalid token configuration return data (may be invalid ABI), check vault.tokenConfigurations(address token) sm function");
             }
@@ -291,40 +333,11 @@ fn _format_price(x: &Vec<ethabi::Token>) -> Price {
     return Price::new_from_eth_token(&x[0]);
 }
 
-fn get_vault_variable_selector(vault_address: &str, variable_name: &str) -> (Address, Bytes) {
-    let address = Address::from_str(vault_address).expect("Failed to parse vault address");
-    let fn_selector_raw = _get_function_selector(&format!("{}()", variable_name));
-    (address, Bytes::from(fn_selector_raw))
-}
-
-fn _get_function_selector(function_signature: &str) -> [u8; 4] {
-    let mut keccak = Keccak::v256();
-    let mut output = [0u8; 32];
-    let mut selector = [0u8; 4];
-
-    keccak.update(function_signature.as_bytes());
-    keccak.finalize(&mut output);
-
-    selector.copy_from_slice(&output[0..4]);
-    selector
-}
-
-fn get_encode_address_and_params(address: &str, function_signature: &str, params: &[ethabi::Token]) -> (Address, Bytes) {
-    let address = Address::from_str(address).expect("Failed to parse address");
-    let data = encode_selector_and_params(function_signature, params);
-    (address, data)
-}
-
-fn encode_selector_and_params(function_signature: &str, params: &[ethabi::Token]) -> Bytes {
-    let selector = _get_function_selector(function_signature);
-    let mut encoded = selector.to_vec();
-    encoded.extend(ethabi::encode(params));
-    Bytes::from(encoded)
-}
-
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use ethers::utils::hex;
     use crate::contracts::vault_logic::VaultLogic;
 
@@ -344,7 +357,28 @@ mod tests {
             rpc_urls: vec!["https://data-seed-prebsc-1-s1.binance.org:8545/".to_string()],
             multicall_address: "0x6e5bb1a5ad6f68a8d7d6a5e47750ec15773d6042".to_string(),
         };
-        return Vault::new(&"0x37546A936433B2ada30BA52a463285eCEdCF7dd1".to_string(), &"0xDF49C2d458892B681331F4EEC0d09A88b283f444".to_string(), &"0x792bA5e9E0Cd15083Ec2f58E434d875892005b91".to_string(), &chain);
+        let address = Rc::new(RefCell::new(
+            ContractAddress {
+                vault: "0x792bA5e9E0Cd15083Ec2f58E434d875892005b91".to_string(),
+                plp_manager: "".to_string(),
+                plp_token: "".to_string(),
+                reward_router:  "".to_string(),
+                futurx_gateway :  "0x7f8cd121aedd5249a03328ce792c6fc5a7f224ce".to_string(),
+                reward_tracker_fee_plp :  "".to_string(),
+                vester_plp : "".to_string(),
+            }
+        ));
+        
+        return Vault::new(&"0xb79391ad9614f72a737db3e3df38e05e5fc185eb".to_string(), &"0xDF49C2d458892B681331F4EEC0d09A88b283f444".to_string(), &"0x792bA5e9E0Cd15083Ec2f58E434d875892005b91".to_string(), &chain, address);
+    }
+
+
+    #[tokio::test]
+    async fn test_fetch_multi_vault_token_variables() {
+        let mut vault = create_vault();
+        let mut tokens = create_tokens();
+        let result = vault.fetch_multi_vault_token_variables(&mut tokens).await;
+        assert!(result.is_ok());
     }
 
     #[test]

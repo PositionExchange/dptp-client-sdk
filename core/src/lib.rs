@@ -1,7 +1,8 @@
 pub mod config;
 pub mod contracts;
+mod utils;
 mod log;
-use std::sync::Arc;
+use std::{sync::Arc, rc::Rc, cell::RefCell};
 
 use async_trait::async_trait;
 use contracts::vault::Vault;
@@ -67,7 +68,9 @@ impl RouterTrait for Router {
             &contract_address.vault.to_lowercase(),
             &contract_address.plp_manager.to_lowercase(),
             &contract_address.plp_token.to_lowercase(),
-            &self.config.chain
+            &self.config.chain,
+            Rc::new(RefCell::new(contract_address))
+
         );
         for token in self.config.tokens.iter_mut() {
             token.address = token.address.to_lowercase();
@@ -104,11 +107,11 @@ impl RouterTrait for Router {
                 print("task 1 start");
                 let mut tokens = tokens.lock().await;
                 print("task 1 start after lock");
-                let res = self.vault.fetch_token_configuration(&mut tokens).await;
-                if res.is_err() {
-                    print("task 1 error");
-                    return;
-                }
+                let res = self.vault.fetch_token_configuration(&mut tokens).await.expect("task 1 error");
+                // if res.is_err() {
+                //     print("task 1 error");
+                //     return;
+                // }
                 print("task 1 done");
             },
             async {
@@ -137,15 +140,19 @@ impl RouterTrait for Router {
                 // print("task 3 done, time {}", startTime.elapsed().as_millis());
             },
         ];
+
+        let mut tokens = tokens.lock().await;
+        self.vault.fetch_multi_vault_token_variables(&mut tokens).await;
         print(format!("tokens full: {:?}", tokens).as_str());
         // re assign new tokens
-        self.config.tokens = tokens.lock().await.to_vec();
-
-
+        self.config.tokens = tokens.to_vec();
 
         for token in self.config.tokens.iter_mut() {
             token.calculate_available_liquidity();
         };
+
+        print("all done");
+
         // let fetch_token_task = tokio::spawn(vault.fetch_token_configuration(&mut tokens));
         // let fetch_token_price_task = tokio::spawn(vault.fetch_token_prices(&mut tokens));
         // tokio::try_join!(fetch_token_task, fetch_token_price_task, fetch_account_balance)?;
@@ -163,7 +170,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_works() {
+            fn it_works() {
         // 1. load config
         let mut router = Router::new();
         router.initilize(97).unwrap();
