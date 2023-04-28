@@ -304,7 +304,7 @@ mod tests {
     #[tokio::test]
     async fn get_buy_glp_to_amount (){
         let mut router = Router::new();
-        router.initilize(97).unwrap();
+        router.initilize(421613).unwrap();
         router.vault.init_vault_state().await.unwrap();
 
         router.calculate_price_plp();
@@ -313,18 +313,19 @@ mod tests {
 
 
         let tokens  = router.load_tokens();
-        println!("&token[0]: {}",  &tokens[0].min_price.unwrap().parsed);
+        println!("&token[0]: {} {:?}",  &tokens[0].min_price.unwrap().parsed, &tokens[0]);
         let (amount, fee) = router.vault.state.get_buy_glp_to_amount(
-            &U256::from_dec_str("10000000000000000000").unwrap(),
+            &U256::from_dec_str("10000000").unwrap(),
             &tokens[0] );
         println!("amount: {}", amount);
         println!("fee: {}", fee);
+
 
     }
     #[tokio::test]
     async fn get_buy_glp_from_amount (){
         let mut router = Router::new();
-        router.initilize(97).unwrap();
+        router.initilize(421613).unwrap();
         router.vault.init_vault_state().await.unwrap();
 
         router.calculate_price_plp();
@@ -335,7 +336,7 @@ mod tests {
         let tokens  = router.load_tokens();
         println!("&token[0]: {}",  &tokens[0].min_price.unwrap().parsed);
         let (amount, fee) = router.vault.state.get_buy_glp_from_amount(
-            U256::from_dec_str("1143979670441064503015").unwrap(),
+            U256::from_dec_str("20579001753694471876").unwrap(),
             &tokens[0] );
         println!("amount: {}", amount);
         println!("fee: {}", fee);
@@ -346,7 +347,7 @@ mod tests {
     #[tokio::test]
     async fn get_sell_glp_to_amount (){
         let mut router = Router::new();
-        router.initilize(97).unwrap();
+        router.initilize(421613).unwrap();
         router.vault.init_vault_state().await.unwrap();
 
         router.calculate_price_plp();
@@ -366,7 +367,7 @@ mod tests {
     #[tokio::test]
     async fn get_sell_glp_from_amount (){
         let mut router = Router::new();
-        router.initilize(97).unwrap();
+        router.initilize(421613).unwrap();
         router.vault.init_vault_state().await.unwrap();
 
         router.calculate_price_plp();
@@ -377,7 +378,7 @@ mod tests {
         let tokens  = router.load_tokens();
         println!("&token[0]: {}",  &tokens[0].min_price.unwrap().parsed);
         let (amount, fee) = router.vault.state.get_sell_glp_from_amount(
-            U256::from_dec_str("87000190039272651").unwrap(),
+            U256::from_dec_str("4842272").unwrap(),
             &tokens[0] );
         println!("amount: {}", amount);
         println!("fee: {}", fee);
