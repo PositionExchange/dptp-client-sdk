@@ -80,6 +80,7 @@ impl WasmRouter {
     pub fn new(chain_id: u64) -> Self {
         init(wasm_logger::Config::default());
         let mut router = Router::new();
+        log::info!("start new, chainId {}", chain_id);
 
         router.initilize(chain_id).expect("load_config failed");
         panic::set_hook(Box::new(console_error_panic_hook::hook));
@@ -153,13 +154,13 @@ impl WasmRouter {
 
     }
 
-    #[wasm_bindgen]
-    pub async fn fetch_data(&self) -> Result<(), JsValue> {
-        self.router.borrow_mut().fetch_data().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("fetch data failure");
-        Ok(())
-
-
-    }
+    // #[wasm_bindgen]
+    // pub async fn fetch_data(&self) -> Result<(), JsValue> {
+    //     self.router.borrow_mut().fetch_data().await.map_err(|e| JsValue::from_str(&e.to_string())).expect("fetch data failure");
+    //     Ok(())
+    //
+    //
+    // }
 
     #[wasm_bindgen]
     pub async fn init_vault_state(&self) -> Result<(), JsValue> {
@@ -347,6 +348,11 @@ impl WasmRouter {
     #[wasm_bindgen]
     pub fn get_plp_price(&self, is_buy: bool) -> JsValue {
         to_value(&self.router.borrow().vault.state.get_plp_price(is_buy)).unwrap()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn connected_chain(&self) -> u64 {
+        self.router.borrow().config.chain.chain_id
     }
 }
 
