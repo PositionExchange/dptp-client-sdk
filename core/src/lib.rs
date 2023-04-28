@@ -313,12 +313,21 @@ mod tests {
 
 
         let tokens  = router.load_tokens();
-        println!("&token[0]: {} {:?}",  &tokens[0].min_price.unwrap().parsed, &tokens[0]);
+        println!("&token[0]: {} {:?}",  &tokens[0].min_price.unwrap().parsed, &tokens[0].symbol);
         let (amount, fee) = router.vault.state.get_buy_glp_to_amount(
             &U256::from_dec_str("10000000").unwrap(),
             &tokens[0] );
         println!("amount: {}", amount);
         println!("fee: {}", fee);
+
+        println!("****************************************************************");
+
+        println!("&token[0]: {} ", &tokens[2].symbol);
+        let (amount, fee) = router.vault.state.get_buy_glp_to_amount(
+            &U256::from_dec_str("100000000").unwrap(),
+            &tokens[2] );
+        println!("amount: {}", amount);
+
 
 
     }
@@ -336,10 +345,21 @@ mod tests {
         let tokens  = router.load_tokens();
         println!("&token[0]: {}",  &tokens[0].min_price.unwrap().parsed);
         let (amount, fee) = router.vault.state.get_buy_glp_from_amount(
-            U256::from_dec_str("20579001753694471876").unwrap(),
+            U256::from_dec_str("34688316279096605298").unwrap(),
             &tokens[0] );
         println!("amount: {}", amount);
         println!("fee: {}", fee);
+
+
+
+        println!("****************************************************************");
+
+        println!("&token[0]: {} ", &tokens[2].symbol);
+        let (amount, fee) = router.vault.state.get_buy_glp_from_amount(
+            U256::from_dec_str("101045757422875282155013").unwrap(),
+            &tokens[2] );
+        println!("amount: {}", amount);
+
 
     }
 
@@ -358,10 +378,20 @@ mod tests {
         let tokens  = router.load_tokens();
         println!("&token[0]: {}",  &tokens[0].min_price.unwrap().parsed);
         let (amount, fee) = router.vault.state.get_sell_glp_to_amount(
-            U256::from_dec_str("10000000000000000000").unwrap(),
+            U256::from_dec_str("34688316279096605298").unwrap(),
             &tokens[0] );
         println!("amount: {}", amount);
         println!("fee: {}", fee);
+
+        println!("****************************************************************");
+
+        println!("&token[0]: {} ", &tokens[2].symbol);
+        let (amount, fee) = router.vault.state.get_sell_glp_to_amount(
+            U256::from_dec_str("101045757422875282155013").unwrap(),
+            &tokens[2] );
+        println!("amount: {}", amount);
+
+
 
     }
     #[tokio::test]
@@ -378,10 +408,20 @@ mod tests {
         let tokens  = router.load_tokens();
         println!("&token[0]: {}",  &tokens[0].min_price.unwrap().parsed);
         let (amount, fee) = router.vault.state.get_sell_glp_from_amount(
-            U256::from_dec_str("4842272").unwrap(),
+            U256::from_dec_str("10000000").unwrap(),
             &tokens[0] );
         println!("amount: {}", amount);
         println!("fee: {}", fee);
+
+
+        println!("****************************************************************");
+
+        println!("&token[0]: {} ", &tokens[2].symbol);
+        let (amount, fee) = router.vault.state.get_sell_glp_from_amount(
+            U256::from_dec_str("100000000").unwrap(),
+            &tokens[2] );
+        println!("amount: {}", amount);
+
 
     }
 
