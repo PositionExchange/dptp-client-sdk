@@ -372,12 +372,20 @@ pub fn get_buy_glp_from_amount(
 
     let min_price = token.min_price.clone().expect("no min price").raw;
 
-    let mut from_amount = to_amount * plp_price * expand_decimals(1, 18) / min_price;
+    let mut from_amount = to_amount * plp_price / min_price;
 
-    from_amount = adjust_for_decimals(&from_amount, USDP_DECIMALS, token.decimals.into());
+    println!("from_amount: {}", from_amount);
+
+
+    // from_amount = adjust_for_decimals(&from_amount, USDP_DECIMALS, token.decimals.into());
+
+    println!("from_amount adjust_for_decimals: {}", from_amount);
+
 
 
     let mut usdg_amount = to_amount * plp_price * expand_decimals(1, 18) / *PRECISION;
+
+    println!("usdg_amount: {}", usdg_amount);
 
     usdg_amount = adjust_for_decimals(&usdg_amount, token.decimals.into(), USDP_DECIMALS);
 
@@ -435,12 +443,17 @@ pub fn get_buy_glp_to_amount(
     }
 
     let mut glp_amount = from_amount
-        .checked_mul(min_price)
+        .checked_mul(min_price )
         .unwrap()
         .checked_div(*plp_price)
         .unwrap();
 
-    glp_amount = adjust_for_decimals(&glp_amount, pay_token.decimals.into(), USDP_DECIMALS);
+
+    println!("pay_token.decimals.into(): {}, glp_amount: {}", pay_token.decimals, glp_amount);
+
+    // glp_amount = adjust_for_decimals(&glp_amount,  USDP_DECIMALS,pay_token.decimals.into());
+
+    println!("glp_amount: {}", glp_amount);
 
 
     let mut usdg_amount = from_amount
@@ -448,6 +461,7 @@ pub fn get_buy_glp_to_amount(
         .unwrap()
         .checked_div(*PRECISION)
         .unwrap();
+    println!("usdg_amount: {}", usdg_amount);
 
     usdg_amount = adjust_for_decimals(&usdg_amount, pay_token.decimals.into(), USDP_DECIMALS);
 
@@ -472,7 +486,7 @@ pub fn get_buy_glp_to_amount(
         .checked_div(*BASIS_POINTS_DIVISOR)
         .unwrap();
 
-    (glp_amount.checked_div(U256::from(10).pow(U256::from(18))).unwrap(), fee_basis_points.into())
+    (glp_amount, fee_basis_points.into())
 }
 
 
@@ -504,7 +518,7 @@ pub fn get_sell_glp_from_amount(
     let mut glp_amount = to_amount * max_price / plp_price;
 
     println!("glp_amount {}", glp_amount);
-    glp_amount = adjust_for_decimals(&glp_amount, swap_token.decimals.into(), USDP_DECIMALS);
+    // glp_amount = adjust_for_decimals(&glp_amount, swap_token.decimals.into(), USDP_DECIMALS);
 
     println!("glp_amount adjust_for_decimals {}", glp_amount);
 
@@ -531,7 +545,7 @@ pub fn get_sell_glp_from_amount(
 
     glp_amount = glp_amount * *BASIS_POINTS_DIVISOR / (*BASIS_POINTS_DIVISOR - fee_basis_points);
 
-    (glp_amount.checked_div(U256::from(10).pow(U256::from(18))).unwrap(), fee_basis_points.into())
+    (glp_amount, fee_basis_points.into())
 }
 
 // Sell PLP- exact token  (PLP) to token
@@ -559,11 +573,11 @@ pub fn get_sell_glp_to_amount(
     println!("to_amount {}", to_amount);
     println!("plp_price {}", plp_price);
 
-    let mut from_amount = to_amount * plp_price * expand_decimals(1, 18) / max_price;
+    let mut from_amount = to_amount * plp_price  / max_price;
 
     println!("from_amount {}", from_amount);
 
-    from_amount = adjust_for_decimals(&from_amount, USDP_DECIMALS, from_token.decimals.into());
+    // from_amount = adjust_for_decimals(&from_amount, USDP_DECIMALS, from_token.decimals.into());
     println!("from_amount adjust_for_decimals {}", from_amount);
 
 
