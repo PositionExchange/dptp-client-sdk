@@ -7,7 +7,7 @@ rpc_urls = [
 multicall_address = "0x1fb9057314f4460a673014F2AF84f3962381E453"
 
 [contract_address]
-vault = "0xE79E86f27Fde55Cab31a4B4E9a615Fd225613A13"
+vault = "0x65433bBa94C9105195590dE6b21aF4CeF3d298Ca"
 plp_manager = "0xA32585e3ecF1067F7E444a7ea3c0d6b5B21626F6"
 plp_token = "0xbf3d20e4b16C10A63144bCe84a23CC8B24CbAf2C"
 
@@ -28,21 +28,31 @@ name = "futurx_gateway"
 
 [[tokens]]
 chain_id = 421613
-address = "0x6a9b98aA950c99300ca8Fa074C0D7FaCc9a8191B"
+address = "0x38193a1c61B2B44446289265580F73746F5BB5AE"
 symbol = "USDT"
-decimals = 18
+decimals = 6
 name = "USD-Tether"
 is_whitlisted = true
 is_tradeable = true
 quote_precision = 4
 logo_url = "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png"
 
+[[tokens]]
+chain_id = 421613
+address = "0x42C2Bd247fbe4804C52999f33105Ad705Dee3bC5"
+symbol = "USDC"
+decimals = 6
+name = "USD-Coin"
+is_whitlisted = true
+is_tradeable = true
+quote_precision = 4
+logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png"
 
 [[tokens]]
 chain_id = 421613
-address = "0x8Fb133239b2A3dfF78C15Bc2Ae6329ffCf9482f4"
+address = "0xA8cc0c527a271c7D196f12c23a65DbFB58C033F5"
 symbol = "BTC"
-decimals = 18
+decimals = 8
 name = "Bitcoin"
 is_whitelisted = true
 is_tradeable = true
@@ -52,7 +62,7 @@ logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/1.png"
 
 [[tokens]]
 chain_id = 421613
-address = "0xb7455AcaFE37F38694880483BC3f48e49Ff53a87"
+address = "0xeB38ba492650c7ea62047E0e879C6a5F6c3e9D8C"
 symbol = "DAI"
 decimals = 18
 name = "DAI Token"
@@ -84,6 +94,7 @@ is_whitlisted = true
 is_tradeable = true
 quote_precision = 8
 logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png"
+is_native_token = true
 
 [[tokens]]
 chain_id = 421613
