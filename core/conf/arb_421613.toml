@@ -30,19 +30,29 @@ name = "futurx_gateway"
 chain_id = 421613
 address = "0x38193a1c61B2B44446289265580F73746F5BB5AE"
 symbol = "USDT"
-decimals = 18
+decimals = 6
 name = "USD-Tether"
 is_whitlisted = true
 is_tradeable = true
 quote_precision = 4
 logo_url = "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png"
 
+[[tokens]]
+chain_id = 421613
+address = "0x42C2Bd247fbe4804C52999f33105Ad705Dee3bC5"
+symbol = "USDC"
+decimals = 6
+name = "USD-Coin"
+is_whitlisted = true
+is_tradeable = true
+quote_precision = 4
+logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png"
 
 [[tokens]]
 chain_id = 421613
 address = "0xA8cc0c527a271c7D196f12c23a65DbFB58C033F5"
 symbol = "BTC"
-decimals = 18
+decimals = 8
 name = "Bitcoin"
 is_whitelisted = true
 is_tradeable = true
@@ -84,6 +94,7 @@ is_whitlisted = true
 is_tradeable = true
 quote_precision = 8
 logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png"
+is_native_token = true
 
 [[tokens]]
 chain_id = 421613
