@@ -372,7 +372,8 @@ pub fn get_buy_glp_from_amount(
 
     let min_price = token.min_price.clone().expect("no min price").raw;
 
-    let mut from_amount = to_amount * plp_price / min_price;
+    // ^18 * ^18 / ^30
+    let mut from_amount = to_amount * plp_price * expand_decimals(1, token.decimals as u32) / (min_price * expand_decimals(1, 6));
 
     println!("from_amount: {}", from_amount);
 
@@ -442,14 +443,20 @@ pub fn get_buy_glp_to_amount(
         return default_value;
     }
 
+    // ^6 * ^30/^18
+    // ^8 * ^30/^18
     let mut glp_amount = from_amount
         .checked_mul(min_price )
         .unwrap()
+        .checked_mul(expand_decimals(1, 6))
+        .unwrap()
         .checked_div(*plp_price)
+        .unwrap()
+        .checked_div(expand_decimals(1, pay_token.decimals as u32))
         .unwrap();
 
 
-    println!("pay_token.decimals.into(): {}, glp_amount: {}", pay_token.decimals, glp_amount);
+    println!("pay_token.decimals.into(): {}, glp_amount: {}, plp_price: {}, min_price: {}", pay_token.decimals, glp_amount, plp_price, min_price);
 
     // glp_amount = adjust_for_decimals(&glp_amount,  USDP_DECIMALS,pay_token.decimals.into());
 
@@ -515,7 +522,9 @@ pub fn get_sell_glp_from_amount(
         return (U256::zero(), 0);
     }
 
-    let mut glp_amount = to_amount * max_price / plp_price;
+    // ^6 * ^30 / ^18
+    // ^8 * ^30 / ^18
+    let mut glp_amount = to_amount * max_price * expand_decimals(1, 6) / (plp_price * expand_decimals(1, swap_token.decimals as u32));
 
     println!("glp_amount {}", glp_amount);
     // glp_amount = adjust_for_decimals(&glp_amount, swap_token.decimals.into(), USDP_DECIMALS);
@@ -569,11 +578,10 @@ pub fn get_sell_glp_to_amount(
 
     let max_price = from_token.max_price.clone().expect("no max price").raw;
 
-    println!("max_price {}", max_price);
-    println!("to_amount {}", to_amount);
-    println!("plp_price {}", plp_price);
 
-    let mut from_amount = to_amount * plp_price  / max_price;
+
+    // ^18 * ^18 / ^30
+    let mut from_amount = to_amount * plp_price * expand_decimals(1, from_token.decimals as u32)  / (max_price * expand_decimals(1, 6));
 
     println!("from_amount {}", from_amount);
 
