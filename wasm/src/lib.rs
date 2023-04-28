@@ -192,7 +192,7 @@ impl WasmRouter {
             mapping_fee_token : HashMap::new(),
 
         };
-        for token_element in self.router.borrow_mut().config.tokens.iter_mut() {
+        for token_element in self.router.borrow().config.tokens.iter() {
             if token_element.is_tradeable.unwrap() {
 
                 let amount = U256::from_dec_str(to_amount).unwrap();
@@ -223,7 +223,8 @@ impl WasmRouter {
             fee_basis_point: 0,
             mapping_fee_token : HashMap::new(),
         };
-        for token_element in self.router.borrow_mut().config.tokens.iter_mut() {
+
+        for token_element in self.router.borrow().config.tokens.iter() {
 
             if token_element.is_tradeable.unwrap() {
                 let amount = U256::from_dec_str(to_amount).unwrap();
@@ -256,7 +257,7 @@ impl WasmRouter {
 
 
         };
-        for token_element in self.router.borrow_mut().config.tokens.iter_mut() {
+        for token_element in self.router.borrow().config.tokens.iter() {
             if token_element.is_tradeable.unwrap() {
 
                 let amount = U256::from_dec_str(to_amount).unwrap();
@@ -287,7 +288,7 @@ impl WasmRouter {
 
 
         };
-        for token_element in self.router.borrow_mut().config.tokens.iter_mut() {
+        for token_element in self.router.borrow().config.tokens.iter() {
             if token_element.is_tradeable.unwrap() {
 
                 let amount = U256::from_dec_str(to_amount).unwrap();
