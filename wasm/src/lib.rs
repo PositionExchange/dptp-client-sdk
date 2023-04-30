@@ -93,7 +93,7 @@ impl WasmRouter {
 
     #[wasm_bindgen]
     pub fn load_config(&self, chain_id: u64) -> Result<JsValue, JsValue> {
-        log::info!("start load_config");
+        log::info!("start load_config {:?}", chain_id);
 
         match self.router.borrow_mut().initilize(chain_id) {
             Ok(config) => Ok(to_value(config).unwrap()),

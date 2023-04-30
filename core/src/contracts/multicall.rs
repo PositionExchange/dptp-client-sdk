@@ -41,7 +41,7 @@ impl ChainMulticallTrait for Chain {
         let client = Arc::new(provider.clone());
         let address: Address = self.multicall_address.parse().expect("invalid multicall address, check your config");
         let multicall = Multicall::new(address, client);
-        log::print(format!("multicall address {}, start calling", address.to_string()).as_str());
+        log::print(format!("multicall address {:?}, start calling", address.to_string()).as_str());
         let (_block_number, return_data) = multicall.aggregate(calls).call().await.expect("Failed to execute multicall");
         log::print(format!("multicall done {}", return_data.len()).as_str());
         Ok(return_data)

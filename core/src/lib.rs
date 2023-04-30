@@ -100,7 +100,8 @@ impl RouterTrait for Router {
         // let tokens1 = Arc::clone(&tokens);
         // let tokens2 = Arc::clone(&tokens);
         // let startTime = Instant::now();
-        print("RUST:: start fetch data");
+
+        print(format!("RUST:: start fetch data, chain id: {:?}", self.config.chain.chain_id).as_str());
         // TODO move the lock to the function??
         let _tasks = tokio::join![
             async {
@@ -423,6 +424,18 @@ mod tests {
         println!("amount: {}", amount);
 
 
+    }
+
+    #[tokio::test]
+    async fn should_switch_chain_success() {
+        let mut router = Router::new();
+        router.initilize(421613).unwrap();
+        router.vault.init_vault_state().await.unwrap();
+        println!("config {:?}", router.config);
+
+        router.initilize(97).unwrap();
+        router.vault.init_vault_state().await.unwrap();
+        println!("config {:?}", router.config);
     }
 
 }
