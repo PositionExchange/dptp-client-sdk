@@ -209,6 +209,10 @@ impl VaultLogic for VaultState {
     }
 
     fn get_plp_price(&self, is_buy: bool) -> U256 {
+
+        println!("self.total_aum[0] {}: ", self.total_aum[0].clone());
+        println!("self.total_aum[1] {}: ", self.total_aum[1].clone());
+        println!("self.usdp_supply {}: ", self.usdp_supply.clone());
         let aum = if is_buy { self.total_aum[0] } else { self.total_aum[1] };
         if self.usdp_supply.eq(&U256::from(0)) {
             return U256::from(0);
@@ -521,6 +525,8 @@ pub fn get_sell_glp_from_amount(
     if max_price == U256::zero() {
         return (U256::zero(), 0);
     }
+
+    println!("plp_price  {}:  ", plp_price);
 
     // ^6 * ^30 / ^18
     // ^8 * ^30 / ^18
