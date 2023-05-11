@@ -99,6 +99,19 @@ quote_precision = 8
 logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png"
 is_native_token = true
 
+
+[[tokens]]
+chain_id = 421613
+address = "0x74c0348CC6027b0c60C27c2c6b8Cf32C5510b569"
+symbol = "LINK"
+decimals = 18
+name = "Chainlink"
+is_whitlisted = true
+is_tradeable = true
+quote_precision = 4
+logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/1975.png"
+is_native_token = false
+
 [[tokens]]
 chain_id = 421613
 address = "0xbf3d20e4b16C10A63144bCe84a23CC8B24CbAf2C"
@@ -123,7 +136,7 @@ logo_url = ""
 
 [[tokens]]
 chain_id = 421613
-address = "0xbf3d20e4b16C10A63144bCe84a23CC8B24CbAf2C"
+address = "0xee09A2509e847f2974096064CfA0e05DFA57C602"
 symbol = "fsPLP"
 decimals = 18
 name = "Position Fee Stake LP"

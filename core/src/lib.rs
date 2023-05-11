@@ -426,6 +426,26 @@ mod tests {
 
     }
 
+
+    #[tokio::test]
+    async fn test_get_swap_details (){
+        let mut router = Router::new();
+        router.initilize(421613).unwrap();
+        router.vault.init_vault_state().await.unwrap();
+
+        router.calculate_price_plp();
+        // println!("price plp buy {}", router.price_plp_buy.unwrap().as_u32());
+        router.fetch_data().await.expect("fetch data failed");
+        let tokens  = router.load_tokens();
+
+
+
+        let (amount_out, fee_amount, fee_bps) = router.vault.state.get_swap_details(&tokens[2], &tokens[4], U256::from_dec_str("100000000").unwrap());
+
+        println!("fee_amount {}, &tokens[2] {}, &tokens[4] {}", fee_amount, &tokens[2].symbol, &tokens[4].symbol);
+
+    }
+
     #[tokio::test]
     async fn should_switch_chain_success() {
         let mut router = Router::new();
