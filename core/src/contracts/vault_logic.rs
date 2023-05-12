@@ -231,20 +231,27 @@ impl VaultLogic for VaultState {
         usdp_amount = adjust_for_decimals(&usdp_amount, token_in.decimals.into(), token_out.decimals.into());
         let is_stable_coin_swap = token_in.is_stable_token.unwrap() && token_out.is_stable_token.unwrap();
 
+        println!("get_swap_details usdp_amount: {}", usdp_amount);
+
+        println!("&usdp_amount.clone(): {} {:?}", &usdp_amount.clone(), &token_in.usdp_amount);
         let fee_bps0 = self.get_fee_basis_points_swap(
             is_stable_coin_swap,
             token_in.token_weight.expect("Invalid token weight"),
             &token_in.usdp_amount.expect("Invalid usdp amount"),
-            &usdp_amount,
+            &usdp_amount.clone(),
             true,
         );
+
+        println!("&usdp_amount.clone(): {}, {:?}", &usdp_amount.clone(), &token_out.usdp_amount);
         let fee_bps1 = self.get_fee_basis_points_swap(
             is_stable_coin_swap,
             token_out.token_weight.expect("Invalid token weight"),
             &token_out.usdp_amount.expect("Invalid usdp amount"),
-            &usdp_amount,
+            &usdp_amount.clone(),
             false
         );
+        println!("fee_bps0 {} ", fee_bps0);
+        println!("fee_bps1 {} ", fee_bps1);
         let fee_bps = if fee_bps0 > fee_bps1 { fee_bps0 } else { fee_bps1 };
 
         let amount_out_after_fee = amount_out * (*BASIS_POINTS_DIVISOR - fee_bps) / (*BASIS_POINTS_DIVISOR);
@@ -285,7 +292,7 @@ fn get_fee_basis_points(
     println!("usdp_supply {} ", usdp_supply);
     println!("total_token_weights {} ", total_token_weights);
     println!("has_dynamic_fees {} ", has_dynamic_fees);
-    if token_usdg_amount.is_zero() || usdp_supply.is_zero() || total_token_weights.is_zero() {
+    if usdp_supply.is_zero() || total_token_weights.is_zero() {
         return 0;
     }
 
@@ -345,6 +352,7 @@ fn get_fee_basis_points(
         if average_diff > target_amount {
             average_diff = target_amount.clone();
         }
+
         let tax_bps = tax_basis_points.clone() * average_diff.clone() / target_amount.clone();
         (fee_basis_points.clone() + tax_bps).low_u32()
     }
