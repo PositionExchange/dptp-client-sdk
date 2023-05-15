@@ -440,9 +440,9 @@ mod tests {
 
 
 
-        let (amount_out, fee_amount, fee_bps) = router.vault.state.get_swap_details(&tokens[2], &tokens[4], U256::from_dec_str("100000000").unwrap());
+        let (amount_out, fee_amount, fee_bps) = router.vault.state.get_swap_details(&tokens[2], &tokens[3], U256::from_dec_str("5000000").unwrap());
 
-        println!("fee_amount {}, &tokens[2] {}, &tokens[4] {}", fee_amount, &tokens[2].symbol, &tokens[4].symbol);
+        println!("fee_amount {}, &tokens[2] {}, &tokens[4] {}", fee_amount, &tokens[2].symbol, &tokens[3].symbol);
 
     }
 
