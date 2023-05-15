@@ -375,22 +375,33 @@ mod tests {
         // println!("price plp buy {}", router.price_plp_buy.unwrap().as_u32());
         router.fetch_data().await.expect("fetch data failed");
 
+        //
+        // let tokens  = router.load_tokens();
+        // println!("&token[0]: {}",  &tokens[0].min_price.unwrap().parsed);
+        // let (amount, fee) = router.vault.state.get_sell_glp_to_amount(
+        //     U256::from_dec_str("34688316279096605298").unwrap(),
+        //     &tokens[0] );
+        // println!("amount: {}", amount);
+        // println!("fee: {}", fee);
+        //
+        // println!("****************************************************************");
+        //
+        // println!("&token[0]: {} ", &tokens[2].symbol);
+        // let (amount, fee) = router.vault.state.get_sell_glp_to_amount(
+        //     U256::from_dec_str("101045757422875282155013").unwrap(),
+        //     &tokens[2] );
+        // println!("amount: {}", amount);
+
+
+        println!("****************************************************************");
 
         let tokens  = router.load_tokens();
         println!("&token[0]: {}",  &tokens[0].min_price.unwrap().parsed);
         let (amount, fee) = router.vault.state.get_sell_glp_to_amount(
-            U256::from_dec_str("34688316279096605298").unwrap(),
-            &tokens[0] );
-        println!("amount: {}", amount);
-        println!("fee: {}", fee);
-
-        println!("****************************************************************");
-
-        println!("&token[0]: {} ", &tokens[2].symbol);
-        let (amount, fee) = router.vault.state.get_sell_glp_to_amount(
-            U256::from_dec_str("101045757422875282155013").unwrap(),
+            U256::from_dec_str("1000000000000000000000000").unwrap(),
             &tokens[2] );
         println!("amount: {}", amount);
+        println!("fee: {}", fee);
 
 
 
@@ -405,24 +416,24 @@ mod tests {
         // println!("price plp buy {}", router.price_plp_buy.unwrap().as_u32());
         router.fetch_data().await.expect("fetch data failed");
 
-
+        //
         let tokens  = router.load_tokens();
-        println!("&token[0]: {}",  &tokens[0].min_price.unwrap().parsed);
-        let (amount, fee) = router.vault.state.get_sell_glp_from_amount(
-            U256::from_dec_str("10000000").unwrap(),
-            &tokens[0] );
-        println!("amount: {}", amount);
-        println!("fee: {}", fee);
-
+        // println!("&token[0]: {}",  &tokens[0].min_price.unwrap().parsed);
+        // let (amount, fee) = router.vault.state.get_sell_glp_from_amount(
+        //     U256::from_dec_str("10000000").unwrap(),
+        //     &tokens[0] );
+        // println!("amount: {}", amount);
+        // println!("fee: {}", fee);
+        //
 
         println!("****************************************************************");
 
-        println!("&token[0]: {} ", &tokens[2].symbol);
+        println!("&token[0] symbol: {} ", &tokens[1].symbol);
         let (amount, fee) = router.vault.state.get_sell_glp_from_amount(
-            U256::from_dec_str("100000000").unwrap(),
-            &tokens[2] );
+            U256::from_dec_str("100000000000000").unwrap(),
+            &tokens[1] );
         println!("amount: {}", amount);
-
+        println!("fee: {}", fee);
 
     }
 
