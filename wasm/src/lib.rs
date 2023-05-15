@@ -353,7 +353,11 @@ impl WasmRouter {
 
     #[wasm_bindgen(getter)]
     pub fn connected_chain(&self) -> u64 {
-        self.router.borrow().config.chain.chain_id
+        let router_ref = self.router.try_borrow();
+        if router_ref.is_err() {
+            return 0;
+        }
+        router_ref.unwrap().config.chain.chain_id
     }
 }
 
