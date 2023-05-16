@@ -534,7 +534,7 @@ pub fn get_sell_glp_from_amount(
         return (U256::zero(), 0);
     }
 
-    println!("plp_price  {}:  ", plp_price);
+    println!("plp_price  {} ", plp_price);
 
     // ^6 * ^30 / ^18
     // ^8 * ^30 / ^18
@@ -547,12 +547,21 @@ pub fn get_sell_glp_from_amount(
 
 
     let mut usdg_amount = to_amount * max_price / *PRECISION;
+
+    println!("[get_sell_glp_from_amount] usdg_amount {} to_amount {} max_price {}", usdg_amount, to_amount, max_price);
+
     usdg_amount = adjust_for_decimals(&usdg_amount, swap_token.decimals.into(), USDP_DECIMALS);
+
+    println!("[get_sell_glp_from_amount] usdg_amount {} usdp_supply {}", usdg_amount, usdp_supply);
+
 
     // In the Vault contract, the USDG supply is reduced before the fee basis points are calculated
     let usdp_supply = usdp_supply
         .checked_sub(usdg_amount)
         .unwrap_or(U256::zero());
+
+    println!("[get_sell_glp_from_amount] usdp_supply {}", usdp_supply);
+
 
     let fee_basis_points = get_fee_basis_points(
         swap_token.token_weight.unwrap_or(0),
@@ -597,20 +606,22 @@ pub fn get_sell_glp_to_amount(
     // ^18 * ^18 / ^30
     let mut from_amount = to_amount * plp_price * expand_decimals(1, from_token.decimals as u32)  / (max_price * expand_decimals(1, 6));
 
-    println!("from_amount {}", from_amount);
+    println!("[get_sell_glp_to_amount] from_amount {}", from_amount);
 
     // from_amount = adjust_for_decimals(&from_amount, USDP_DECIMALS, from_token.decimals.into());
-    println!("from_amount adjust_for_decimals {}", from_amount);
+    println!("[get_sell_glp_to_amount] from_amount adjust_for_decimals {}", from_amount);
 
 
-    let usdg_amount = to_amount * plp_price * expand_decimals(1, 18) / *PRECISION;
-    println!("usdg_amount {}", usdg_amount);
+    println!("[get_sell_glp_to_amount] to_amount {} plp_price {}", to_amount,plp_price);
+    let usdg_amount = to_amount * plp_price   / expand_decimals(1, 18) ;
+    println!("[get_sell_glp_to_amount] usdg_amount {} usdp_supply {}", usdg_amount, usdp_supply);
 
 
     // In the Vault contract, the USDG supply is reduced before the fee basis points are calculated
     let new_usdg_supply = usdp_supply.clone().checked_sub(usdg_amount).unwrap_or(U256::zero());
 
-    println!("new_usdg_supply {}", new_usdg_supply);
+
+    println!("[get_sell_glp_to_amount] new_usdg_supply {}", new_usdg_supply);
 
 
     // In the Vault contract, the token.usdg_amount is reduced before the fee basis points are calculated
