@@ -399,7 +399,7 @@ mod tests {
         println!("&token[0]: {}",  &tokens[0].min_price.unwrap().parsed);
         let (amount, fee) = router.vault.state.get_sell_glp_to_amount(
             U256::from_dec_str("1000000000000000000000000").unwrap(),
-            &tokens[2] );
+            &tokens[0] );
         println!("amount: {}", amount);
         println!("fee: {}", fee);
 
