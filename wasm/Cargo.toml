@@ -1,6 +1,6 @@
 [package]
 name = "futurx_sdk"
-version = "0.3.152"
+version = "0.3.153"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
