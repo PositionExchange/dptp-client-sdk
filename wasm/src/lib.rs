@@ -95,7 +95,8 @@ impl WasmRouter {
     pub fn load_config(&self, chain_id: u64) -> Result<JsValue, JsValue> {
         log::info!("start load_config {:?}", chain_id);
 
-        match self.router.borrow_mut().initilize(chain_id) {
+        let mut router = self.router.try_borrow_mut().expect("router is not initialized");
+        match router.initilize(chain_id) {
             Ok(config) => Ok(to_value(config).unwrap()),
             Err(e) => Err(JsValue::from_str(e)),
         }
