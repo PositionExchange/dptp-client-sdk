@@ -5,8 +5,10 @@ use std::{time::Duration};
 use std::collections::HashMap;
 
 use ethers::types::{Address, Bytes, U256};
+use instant::Instant;
 use serde::Serialize;
 use tokio::sync::Mutex;
+use tokio::sync::Notify;
 use crate::config::{Chain, ContractAddress};
 use crate::log;
 use crate::utils::*;
@@ -55,13 +57,14 @@ pub struct Vault {
     chain_arc: Arc<Mutex<Chain>>,
     pub state: VaultState,
     contract_address: Arc<Mutex<ContractAddress>>,
+    vault_info_updated_notify: Arc<Notify>,
 }
 
 impl Vault {
     pub fn new(vault_addr: &String, plp_manager: &String, plp_token: &String, chain: &Chain, contract_address: Rc<RefCell<ContractAddress>>) -> Self {
         // convert contract address to arc mutex
         let contract_address = Arc::new(Mutex::new(contract_address.borrow().clone()));
-        Self { vault_addr: vault_addr.to_string(), plp_token: plp_token.to_string(), plp_manager: plp_manager.to_string(), chain: chain.clone(), state: VaultState::default(), contract_address, chain_arc: Arc::new(Mutex::new(chain.clone())) }
+        Self { vault_addr: vault_addr.to_string(), plp_token: plp_token.to_string(), plp_manager: plp_manager.to_string(), chain: chain.clone(), state: VaultState::default(), contract_address, chain_arc: Arc::new(Mutex::new(chain.clone())), vault_info_updated_notify: Arc::new(Notify::new()) }
     }
 
     pub async fn init_vault_state(&mut self) -> anyhow::Result<()> {
@@ -214,6 +217,7 @@ impl Vault {
     }
 
     pub async fn fetch_vault_info(&self, tokens: TokensArc) -> anyhow::Result<()> {
+        // Lock vault info
         let mut calls: Vec<(Address, Bytes)> = vec![];
 
         {
@@ -244,6 +248,7 @@ impl Vault {
                 anyhow::bail!("Invalid token configuration return data (may be invalid ABI), check vault.tokenConfigurations(address token) sm function");
             }
         }
+        self.vault_info_updated_notify.notify_one();
         Ok(())
     }
 
@@ -271,7 +276,9 @@ impl Vault {
         ).collect();
         // chunk decode results into call_fns.len
         let chunked_decode_results = decode_results.chunks(vault_calls_fns.len() + user_gateway_calls_fns.len());
-        println!("chunks {:?}", chunked_decode_results);
+        // println!("chunks {:?}", chunked_decode_results);
+        // Wait for vault info updated
+        self.vault_info_updated_notify.notified().await;
         let mut tokens = tokens.write().await;
         for (token, chunked_decode_result) in tokens.iter_mut().zip(chunked_decode_results) {
             if let [guaranteed_usd, global_short_sizes, max_global_long_sizes, max_global_short_sizes] = chunked_decode_result {
@@ -280,8 +287,6 @@ impl Vault {
                 let max_global_long_sizes = max_global_long_sizes[0].clone().into_uint().expect("Fail to parse global_short_sizes");
                 let max_global_short_sizes = max_global_short_sizes[0].clone().into_uint().expect("Fail to parse global_short_sizes");
 
-                crate::p!("token address {}, guaranteed_usd {:?}, global_short_sizes {:?}, max_global_long_sizes {}, max_global_short_sizes {}", token.address, guaranteed_usd, global_short_sizes, max_global_long_sizes, max_global_short_sizes);
-                crate::p!("update tokens {:?}", token);
                 token.update_available_long_short_amounts(max_global_long_sizes, max_global_short_sizes, guaranteed_usd, global_short_sizes)
             } else {
                 anyhow::bail!("Invalid token configuration return data (may be invalid ABI), check vault.tokenConfigurations(address token) sm function");

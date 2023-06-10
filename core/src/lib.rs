@@ -150,8 +150,9 @@ impl RouterTrait for Router {
             vault: VaultArc,
             startTime: Instant,
         ) -> anyhow::Result<()> {
+            let vault = vault.read().await;
             p!("task 4 start after lock, elapsed: {:?}", startTime.elapsed());
-            vault.write().await
+            vault
                 .fetch_multi_vault_token_variables(tokens)
                 .await;
             print("task 4 done");
