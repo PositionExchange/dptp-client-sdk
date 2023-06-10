@@ -13,7 +13,7 @@ use instant::Instant;
 // use tokio::{task::futures};
 
 use crate::contracts::token::Token;
-use crate::contracts::types::VaultArc;
+use crate::contracts::types::{VaultArc, TokensArc};
 use crate::contracts::vault_logic::VaultLogic;
 use contracts::global_fetch::*;
 use ethabi::ethereum_types::U256;
@@ -93,7 +93,7 @@ impl RouterTrait for Router {
     async fn fetch_data(&mut self) -> anyhow::Result<()> {
         let tokens = self.load_tokens();
         // p!("tokens: ", tokens);
-        let tokens = Arc::new(tokio::sync::Mutex::new(tokens));
+        let tokens = Arc::new(tokio::sync::RwLock::new(tokens));
         let vault = Arc::new(tokio::sync::RwLock::new(self.vault.clone()));
         // let tokens1 = Arc::clone(&tokens);
         // let tokens2 = Arc::clone(&tokens);
@@ -108,7 +108,7 @@ impl RouterTrait for Router {
         );
 
         async fn fetch_token_configuration(
-            tokens: Arc<tokio::sync::Mutex<Vec<Token>>>,
+            tokens: TokensArc,
             vault: VaultArc,
             startTime: Instant,
         ) -> anyhow::Result<()> {
@@ -123,7 +123,7 @@ impl RouterTrait for Router {
             Ok(())
         }
         async fn fetch_vault_info(
-            tokens: Arc<tokio::sync::Mutex<Vec<Token>>>,
+            tokens: TokensArc,
             vault: VaultArc,
             startTime: Instant,
         ) -> anyhow::Result<()> {
@@ -134,7 +134,7 @@ impl RouterTrait for Router {
             Ok(())
         }
         async fn fetch_token_prices(
-            tokens: Arc<tokio::sync::Mutex<Vec<Token>>>,
+            tokens: TokensArc,
             vault: VaultArc,
             startTime: Instant,
         ) -> anyhow::Result<()> {
@@ -146,7 +146,7 @@ impl RouterTrait for Router {
         }
 
         async fn fetch_multi_vault_token_variables(
-            tokens: Arc<tokio::sync::Mutex<Vec<Token>>>,
+            tokens: TokensArc,
             vault: VaultArc,
             startTime: Instant,
         ) -> anyhow::Result<()> {
@@ -160,7 +160,7 @@ impl RouterTrait for Router {
         }
 
         async fn fetch_user_info(
-            tokens: Arc<tokio::sync::Mutex<Vec<Token>>>,
+            tokens: TokensArc,
             config: Arc<tokio::sync::RwLock<config::Config>>,
             startTime: Instant,
         ) -> anyhow::Result<()> {
@@ -196,7 +196,7 @@ impl RouterTrait for Router {
         print("all done");
         p!("all done, time: {}", startTime.elapsed().as_millis());
 
-        let tokens = tokens.lock().await;
+        let tokens = tokens.read().await;
         // self.vault
         //     .fetch_multi_vault_token_variables(&mut tokens)
         //     .await;

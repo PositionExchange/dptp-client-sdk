@@ -30,7 +30,7 @@ impl GlobalFetch for Config {
             (call_address, data)
         }).collect();
         let results = self.chain.execute_multicall(calls, include_str!("../../abi/erc20.json").to_string(), "balanceOf").await.unwrap();
-        let mut update_tokens = update_tokens.lock().await;
+        let mut update_tokens = update_tokens.write().await;
         for (token, result) in update_tokens.iter_mut().zip(results) {
             let balance = result[0].clone().into_uint().expect("failed to parse balance");
             token.update_balance(&account, balance);
@@ -55,7 +55,7 @@ impl GlobalFetch for Config {
         });
         let results = self.chain.execute_multicall(calls, include_str!("../../abi/erc20.json").to_string(), "allowance").await.unwrap();
         let mut index = 0;
-        let mut update_tokens = update_tokens.lock().await;
+        let mut update_tokens = update_tokens.write().await;
         update_tokens.iter_mut().for_each(|token| {
             self.contract_spender.iter().for_each(|spender| {
                 let allowance_amount = results[index].clone()[0].clone().into_uint().expect("failed to parse allowance");
@@ -96,7 +96,7 @@ mod tests {
         config.set_selected_account("0xDfbE56f4e2177a498B5C49C7042171795434e7D1".to_string());
         // let tokens = Mutex::new(config.tokens.clone());
         let mut tokens = config.tokens.clone();
-        let tokens = Arc::new(tokio::sync::Mutex::new(tokens));
+        let tokens = Arc::new(tokio::sync::RwLock::new(tokens));
         config.fetch_balances(&tokens.clone()).await.expect("fetch_balances failed");
         let token0Balance = config.tokens[0].get_balance(&FAKE_ADDRESS.to_string());
 

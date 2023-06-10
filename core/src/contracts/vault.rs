@@ -183,7 +183,7 @@ impl Vault {
         let mut calls: Vec<(Address, Bytes)> = vec![];
         // let mut tokens = tokens.lock().await;
         {
-            let _tokens = tokens.lock().await;
+            let _tokens = tokens.read().await;
             calls = _tokens.iter().map(|token| {
                 let (vault_addr, data) = token.build_get_vault_token_configuration_call(&self.vault_addr);
                 (vault_addr, data)
@@ -194,7 +194,7 @@ impl Vault {
         log::print(format!("calls: {:?}", calls).as_str());
         let results = self.chain_arc.lock().await.execute_multicall(calls, include_str!("../../abi/vault.json").to_string(), "tokenConfigurations").await.expect("[Vault] Failed to fetch token configurations");
         log::print(format!("results before lock: {:?}", results).as_str());
-        let mut tokens = tokens.lock().await;
+        let mut tokens = tokens.write().await;
         println!("after lock");
         for (token, result) in tokens.iter_mut().zip(results) {
             if let [is_whitelisted, _token_decimals, is_stable_token, is_shortable_token, min_profit_basis_points, token_weight, max_usdp_amount] = result.as_slice() {
@@ -217,7 +217,7 @@ impl Vault {
         let mut calls: Vec<(Address, Bytes)> = vec![];
 
         {
-            let tokens = tokens.lock().await;
+            let tokens = tokens.read().await;
             calls = tokens.iter().map(|token| {
                 let (vault_addr, data) = token.build_get_vault_info(&self.vault_addr);
                 (vault_addr, data)
@@ -226,7 +226,7 @@ impl Vault {
 
         let results = self.chain.execute_multicall(calls, include_str!("../../abi/vault.json").to_string(), "vaultInfo").await.expect("[Vault] Failed to fetch vault info");
 
-        let mut tokens = tokens.lock().await;
+        let mut tokens = tokens.write().await;
         for (token, result) in tokens.iter_mut().zip(results) {
             if let [
                 feeReserves,
@@ -254,7 +254,7 @@ impl Vault {
         println!("user_gatway_addr: {:?}", user_gatway_addr);
         let mut calls: Vec<Vec<(Address, Bytes)>> = vec![];
         {
-            let tokens = tokens.lock().await;
+            let tokens = tokens.read().await;
             calls = tokens.iter().map(|token| {
                 let mut calls: Vec<(Address, Bytes)> = Vec::new();
                 let vault_calls: Vec<(Address, Bytes)> = vault_calls_fns.iter().map(|call_fn| token.build_get_token_variable(&self.vault_addr, call_fn)).collect();
@@ -272,7 +272,7 @@ impl Vault {
         // chunk decode results into call_fns.len
         let chunked_decode_results = decode_results.chunks(vault_calls_fns.len() + user_gateway_calls_fns.len());
         println!("chunks {:?}", chunked_decode_results);
-        let mut tokens = tokens.lock().await;
+        let mut tokens = tokens.write().await;
         for (token, chunked_decode_result) in tokens.iter_mut().zip(chunked_decode_results) {
             if let [guaranteed_usd, global_short_sizes, max_global_long_sizes, max_global_short_sizes] = chunked_decode_result {
                 let guaranteed_usd = guaranteed_usd[0].clone().into_uint().expect("Fail to parse guaranteed_usd");
@@ -295,7 +295,7 @@ impl Vault {
         // fetch ask price
         let mut fetch_ask_price_calls: Vec<(Address, Bytes)> = vec![];
         {
-            let tokens = tokens.lock().await;
+            let tokens = tokens.read().await;
             fetch_ask_price_calls = tokens.iter()
                 .filter(|token| token.is_tradeable == Some(true))
                 .map(|token| {
@@ -307,7 +307,7 @@ impl Vault {
         let results_ask_price = self.chain.execute_multicall(fetch_ask_price_calls, include_str!("../../abi/vault.json").to_string(), "getAskPrice").await.expect("[Vault] Failed to fetch ask prices");
 
 
-        let mut tokens = tokens.lock().await;
+        let mut tokens = tokens.write().await;
         // fetch bid price
         let fetch_bid_price_calls: Vec<(Address, Bytes)> = tokens.iter()
             .filter(|token| token.is_tradeable == Some(true))
