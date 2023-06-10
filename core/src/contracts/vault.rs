@@ -1,15 +1,20 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::Arc;
 use std::{time::Duration};
 use std::collections::HashMap;
 
 use ethers::types::{Address, Bytes, U256};
+use instant::Instant;
 use serde::Serialize;
+use tokio::sync::Mutex;
+use tokio::sync::Notify;
 use crate::config::{Chain, ContractAddress};
 use crate::log;
 use crate::utils::*;
 use super::token::{Token, Price};
 use super::multicall::*;
+use super::types::TokensArc;
 use ethabi::Token as AbiToken;
 
 #[derive(Default, Debug, Serialize, Clone)]
@@ -43,19 +48,23 @@ pub struct VaultState {
     pub reserved_amount : Option<HashMap<Address, U256>>
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct Vault {
     pub vault_addr: String,
     pub plp_manager: String,
     pub plp_token: String,
     pub chain: Chain,
+    chain_arc: Arc<Mutex<Chain>>,
     pub state: VaultState,
-    contract_address: Rc<RefCell<ContractAddress>>,
+    contract_address: Arc<Mutex<ContractAddress>>,
+    vault_info_updated_notify: Arc<Notify>,
 }
 
 impl Vault {
     pub fn new(vault_addr: &String, plp_manager: &String, plp_token: &String, chain: &Chain, contract_address: Rc<RefCell<ContractAddress>>) -> Self {
-        Self { vault_addr: vault_addr.to_string(), plp_token: plp_token.to_string(), plp_manager: plp_manager.to_string(), chain: chain.clone(), state: VaultState::default(), contract_address }
+        // convert contract address to arc mutex
+        let contract_address = Arc::new(Mutex::new(contract_address.borrow().clone()));
+        Self { vault_addr: vault_addr.to_string(), plp_token: plp_token.to_string(), plp_manager: plp_manager.to_string(), chain: chain.clone(), state: VaultState::default(), contract_address, chain_arc: Arc::new(Mutex::new(chain.clone())), vault_info_updated_notify: Arc::new(Notify::new()) }
     }
 
     pub async fn init_vault_state(&mut self) -> anyhow::Result<()> {
@@ -172,16 +181,24 @@ impl Vault {
         Ok(())
     }
 
-    pub async fn fetch_token_configuration(&self, tokens: &mut Vec<Token>) -> anyhow::Result<()> {
+    pub async fn fetch_token_configuration(&self, tokens: TokensArc) -> anyhow::Result<()> {
         log::print("srtart fetch_token_configuration");
+        let mut calls: Vec<(Address, Bytes)> = vec![];
         // let mut tokens = tokens.lock().await;
-        let calls: Vec<(Address, Bytes)> = tokens.iter().map(|token| {
-            let (vault_addr, data) = token.build_get_vault_token_configuration_call(&self.vault_addr);
-            (vault_addr, data)
-        }).collect();
+        {
+            let _tokens = tokens.read().await;
+            calls = _tokens.iter().map(|token| {
+                let (vault_addr, data) = token.build_get_vault_token_configuration_call(&self.vault_addr);
+                (vault_addr, data)
+            }).collect();
+            // unlock locked
+        }
+        
         log::print(format!("calls: {:?}", calls).as_str());
-        let results = self.chain.execute_multicall(calls, include_str!("../../abi/vault.json").to_string(), "tokenConfigurations").await.expect("[Vault] Failed to fetch token configurations");
-        log::print(format!("results: {:?}", results).as_str());
+        let results = self.chain_arc.lock().await.execute_multicall(calls, include_str!("../../abi/vault.json").to_string(), "tokenConfigurations").await.expect("[Vault] Failed to fetch token configurations");
+        log::print(format!("results before lock: {:?}", results).as_str());
+        let mut tokens = tokens.write().await;
+        println!("after lock");
         for (token, result) in tokens.iter_mut().zip(results) {
             if let [is_whitelisted, _token_decimals, is_stable_token, is_shortable_token, min_profit_basis_points, token_weight, max_usdp_amount] = result.as_slice() {
                 token.update_token_configuration(
@@ -199,16 +216,21 @@ impl Vault {
         Ok(())
     }
 
-    pub async fn fetch_vault_info(&self, tokens: &mut Vec<Token>) -> anyhow::Result<()> {
+    pub async fn fetch_vault_info(&self, tokens: TokensArc) -> anyhow::Result<()> {
+        // Lock vault info
+        let mut calls: Vec<(Address, Bytes)> = vec![];
 
-        let calls: Vec<(Address, Bytes)> = tokens.iter().map(|token| {
-            let (vault_addr, data) = token.build_get_vault_info(&self.vault_addr);
-            (vault_addr, data)
-        }).collect();
-
+        {
+            let tokens = tokens.read().await;
+            calls = tokens.iter().map(|token| {
+                let (vault_addr, data) = token.build_get_vault_info(&self.vault_addr);
+                (vault_addr, data)
+            }).collect();
+        }
 
         let results = self.chain.execute_multicall(calls, include_str!("../../abi/vault.json").to_string(), "vaultInfo").await.expect("[Vault] Failed to fetch vault info");
 
+        let mut tokens = tokens.write().await;
         for (token, result) in tokens.iter_mut().zip(results) {
             if let [
                 feeReserves,
@@ -226,22 +248,27 @@ impl Vault {
                 anyhow::bail!("Invalid token configuration return data (may be invalid ABI), check vault.tokenConfigurations(address token) sm function");
             }
         }
+        self.vault_info_updated_notify.notify_one();
         Ok(())
     }
 
-    pub async fn fetch_multi_vault_token_variables(&mut self, tokens: &mut Vec<Token>) -> anyhow::Result<()> {
+    pub async fn fetch_multi_vault_token_variables(&self, tokens: TokensArc) -> anyhow::Result<()> {
         let vault_calls_fns = ["guaranteedUsd", "globalShortSizes"];
         let user_gateway_calls_fns = ["maxGlobalLongSizes", "maxGlobalShortSizes"];
-        let user_gatway_addr = self.contract_address.borrow().futurx_gateway.clone();
+        let user_gatway_addr = self.contract_address.lock().await.futurx_gateway.clone();
         println!("user_gatway_addr: {:?}", user_gatway_addr);
-        let calls: Vec<Vec<(Address, Bytes)>> = tokens.iter().map(|token| {
-            let mut calls: Vec<(Address, Bytes)> = Vec::new();
-            let vault_calls: Vec<(Address, Bytes)> = vault_calls_fns.iter().map(|call_fn| token.build_get_token_variable(&self.vault_addr, call_fn)).collect();
-            calls.extend(vault_calls);
-            let user_gateway_calls: Vec<(Address, Bytes)> = user_gateway_calls_fns.iter().map(|call_fn| token.build_get_token_variable(&user_gatway_addr, call_fn)).collect();
-            calls.extend(user_gateway_calls);
-            calls
-        }).collect();
+        let mut calls: Vec<Vec<(Address, Bytes)>> = vec![];
+        {
+            let tokens = tokens.read().await;
+            calls = tokens.iter().map(|token| {
+                let mut calls: Vec<(Address, Bytes)> = Vec::new();
+                let vault_calls: Vec<(Address, Bytes)> = vault_calls_fns.iter().map(|call_fn| token.build_get_token_variable(&self.vault_addr, call_fn)).collect();
+                calls.extend(vault_calls);
+                let user_gateway_calls: Vec<(Address, Bytes)> = user_gateway_calls_fns.iter().map(|call_fn| token.build_get_token_variable(&user_gatway_addr, call_fn)).collect();
+                calls.extend(user_gateway_calls);
+                calls
+            }).collect();
+        }
         let flatten_calls: Vec<(Address, Bytes)> = calls.into_iter().flatten().collect();
         let results = self.chain.execute_multicall_raw(flatten_calls).await.expect("[Vault] Failed to fetch multi vault token variables");
         let decode_results: Vec<_> = results.into_iter().map(
@@ -249,7 +276,10 @@ impl Vault {
         ).collect();
         // chunk decode results into call_fns.len
         let chunked_decode_results = decode_results.chunks(vault_calls_fns.len() + user_gateway_calls_fns.len());
-        println!("chunks {:?}", chunked_decode_results);
+        // println!("chunks {:?}", chunked_decode_results);
+        // Wait for vault info updated
+        self.vault_info_updated_notify.notified().await;
+        let mut tokens = tokens.write().await;
         for (token, chunked_decode_result) in tokens.iter_mut().zip(chunked_decode_results) {
             if let [guaranteed_usd, global_short_sizes, max_global_long_sizes, max_global_short_sizes] = chunked_decode_result {
                 let guaranteed_usd = guaranteed_usd[0].clone().into_uint().expect("Fail to parse guaranteed_usd");
@@ -257,8 +287,6 @@ impl Vault {
                 let max_global_long_sizes = max_global_long_sizes[0].clone().into_uint().expect("Fail to parse global_short_sizes");
                 let max_global_short_sizes = max_global_short_sizes[0].clone().into_uint().expect("Fail to parse global_short_sizes");
 
-                crate::p!("token address {}, guaranteed_usd {:?}, global_short_sizes {:?}, max_global_long_sizes {}, max_global_short_sizes {}", token.address, guaranteed_usd, global_short_sizes, max_global_long_sizes, max_global_short_sizes);
-                crate::p!("update tokens {:?}", token);
                 token.update_available_long_short_amounts(max_global_long_sizes, max_global_short_sizes, guaranteed_usd, global_short_sizes)
             } else {
                 anyhow::bail!("Invalid token configuration return data (may be invalid ABI), check vault.tokenConfigurations(address token) sm function");
@@ -267,19 +295,24 @@ impl Vault {
         Ok(())
     }
 
-    pub async fn fetch_token_prices(&self, tokens: &mut Vec<Token>) -> anyhow::Result<()> {
+    pub async fn fetch_token_prices(&self, tokens: TokensArc) -> anyhow::Result<()> {
         // let mut tokens = tokens.lock().await;
         // fetch ask price
-        let fetch_ask_price_calls: Vec<(Address, Bytes)> = tokens.iter()
-            .filter(|token| token.is_tradeable == Some(true))
-            .map(|token| {
-                let (vault_addr, data) = token.build_get_ask_price_call(&self.vault_addr);
-                (vault_addr, data)
-            }).collect();
+        let mut fetch_ask_price_calls: Vec<(Address, Bytes)> = vec![];
+        {
+            let tokens = tokens.read().await;
+            fetch_ask_price_calls = tokens.iter()
+                .filter(|token| token.is_tradeable == Some(true))
+                .map(|token| {
+                    let (vault_addr, data) = token.build_get_ask_price_call(&self.vault_addr);
+                    (vault_addr, data)
+                }).collect();
+        }
 
         let results_ask_price = self.chain.execute_multicall(fetch_ask_price_calls, include_str!("../../abi/vault.json").to_string(), "getAskPrice").await.expect("[Vault] Failed to fetch ask prices");
 
 
+        let mut tokens = tokens.write().await;
         // fetch bid price
         let fetch_bid_price_calls: Vec<(Address, Bytes)> = tokens.iter()
             .filter(|token| token.is_tradeable == Some(true))
@@ -342,6 +375,7 @@ mod tests {
     use crate::contracts::vault_logic::VaultLogic;
 
     use super::*;
+    use crate::contracts::types::to_tokens_arc;
 
     fn create_tokens() -> Vec<Token> {
         let mut tokens = vec![
@@ -377,7 +411,7 @@ mod tests {
     async fn test_fetch_multi_vault_token_variables() {
         let mut vault = create_vault();
         let mut tokens = create_tokens();
-        let result = vault.fetch_multi_vault_token_variables(&mut tokens).await;
+        let result = vault.fetch_multi_vault_token_variables(to_tokens_arc(tokens.clone())).await;
         assert!(result.is_ok());
     }
 
@@ -396,7 +430,7 @@ mod tests {
         let vault = create_vault();
         // let tokens = Mutex::new(create_tokens());
         let mut tokens = create_tokens();
-        let result = vault.fetch_token_configuration(&mut tokens).await;
+        let result = vault.fetch_token_configuration(to_tokens_arc(tokens.clone())).await;
         assert!(result.is_ok());
         // let tokens = tokens.lock().await;
         // verify tokens is modified
@@ -412,8 +446,8 @@ mod tests {
         let mut tokens = create_tokens();
         println!("len {} ", tokens.len());
 
-        let result = vault.fetch_token_configuration(&mut tokens).await;
-        let result = vault.fetch_vault_info(&mut tokens).await;
+        let result = vault.fetch_token_configuration(to_tokens_arc(tokens.clone())).await;
+        let result = vault.fetch_vault_info(to_tokens_arc(tokens.clone())).await;
         assert_eq!(tokens[0].usdp_amount, Some(U256::zero()));
         assert_eq!(tokens[0].reserved_amounts, Some(U256::zero()));
         assert_eq!(tokens[0].pool_amounts, Some(U256::zero()));
@@ -459,7 +493,7 @@ mod tests {
 
         // let mut tokens = Mutex::new(create_tokens());
         let mut tokens = create_tokens();
-        let result = vault.fetch_token_prices(&mut tokens).await;
+        let result = vault.fetch_token_prices(to_tokens_arc(tokens.clone())).await;
         assert!(result.is_ok());
         // let tokens = tokens.lock().await;
 
@@ -499,8 +533,8 @@ mod tests {
         let mut tokens = create_tokens();
         println!("len {} ", tokens.len());
 
-        let result = vault.fetch_token_configuration(&mut tokens).await;
-        let result = vault.fetch_vault_info(&mut tokens).await;
+        let result = vault.fetch_token_configuration(to_tokens_arc(tokens.clone())).await;
+        let result = vault.fetch_vault_info(to_tokens_arc(tokens.clone())).await;
 
 
         let (result, fee) = vault.state.get_buy_glp_to_amount(&U256::from_dec_str("1000000000000000000").unwrap(), &tokens[0] );

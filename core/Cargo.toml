@@ -23,5 +23,6 @@ futures = "0.3"
 wasm-bindgen = "0.2.78"
 tiny-keccak = "2.0.2"
 rand = "0.8.5"
+instant = { version = "0.1" }
 
 wasm-logger = "0.2.0"

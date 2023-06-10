@@ -31,9 +31,17 @@ impl ChainMulticallTrait for Chain {
         Ok(decode_return_data(return_data.unwrap(), interface.clone(), fn_name))
     }
     async fn execute_multicall_raw(&self, calls: Vec<(Address, Bytes)>) -> Result<Vec<Bytes>, String>{
-        let mut rng = rand::thread_rng();
+        // let mut rng = rand::thread_rng();
         // random rpc
-        let random_index =if self.rpc_urls.len() > 1  {rng.gen_range(0..(self.rpc_urls.len() - 1))} else {0};
+        // let random_index =if self.rpc_urls.len() > 1  {rng.gen_range(0..(self.rpc_urls.len() - 1))} else {0};
+        let random_index = {
+            let mut rng = rand::thread_rng();
+            if self.rpc_urls.len() > 1 {
+                rng.gen_range(0..(self.rpc_urls.len() - 1))
+            } else {
+                0
+            }
+        };
 
         log::print(format!("random_index {}, rpcs: {}", random_index, self.rpc_urls.len()).as_str());
 
