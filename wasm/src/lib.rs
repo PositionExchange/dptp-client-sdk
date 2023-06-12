@@ -134,6 +134,48 @@ impl WasmRouter {
     }
 
     #[wasm_bindgen]
+    pub async fn fetch_balance(&self) {
+        match self.router.try_borrow_mut() {
+            Ok(mut router) => {
+                let mut lock = self.lock.lock().await;
+                log::info!("lock done");
+                let res1 = router
+                    .fetch_balance()
+                    .await
+                    .map_err(|e| JsValue::from_str(&e.to_string()))
+                    .expect("fetch data failure");
+                *lock += 1;
+                log::info!("fetch async done");
+            }
+            Err(e) => {
+                log::error!("fetch async error: {}", e.to_string());
+            }
+        }
+
+    }
+
+    #[wasm_bindgen]
+    pub async fn fetch_vault(&self) {
+        match self.router.try_borrow_mut() {
+            Ok(mut router) => {
+                let mut lock = self.lock.lock().await;
+                log::info!("lock done");
+                let res1 = router
+                    .fetch_vault()
+                    .await
+                    .map_err(|e| JsValue::from_str(&e.to_string()))
+                    .expect("fetch data failure");
+                *lock += 1;
+                log::info!("fetch async done");
+            }
+            Err(e) => {
+                log::error!("fetch async error: {}", e.to_string());
+            }
+        }
+
+    }
+
+    #[wasm_bindgen]
     pub async fn fetch_async(&self, account: String) {
         log::info!("check set_account {}", account.clone());
         match self.router.try_borrow_mut() {
