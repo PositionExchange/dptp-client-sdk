@@ -37,6 +37,8 @@ pub trait RouterTrait {
     /// this function will init the account
     fn set_account(&mut self, account: String);
     fn calculate_price_plp(&mut self);
+    async fn fetch_balance(&mut self) -> anyhow::Result<()>;
+    async fn fetch_vault(&mut self) -> anyhow::Result<()>;
     async fn fetch_data(&mut self) -> anyhow::Result<()>;
 }
 
@@ -89,6 +91,131 @@ impl RouterTrait for Router {
         self.price_plp_buy = self.vault.state.get_plp_price(true); // &Option::from(self.vault.state.get_plp_price(true));
         self.price_plp_sell = self.vault.state.get_plp_price(false); //&Option::from(self.vault.state.get_plp_price(false));
     }
+
+    async fn fetch_balance(&mut self) -> anyhow::Result<()>{
+
+        let tokens = self.load_tokens();
+        let tokens = Arc::new(tokio::sync::RwLock::new(tokens));
+
+        async fn fetch_user_info(
+            tokens: TokensArc,
+            config: Arc<tokio::sync::RwLock<config::Config>>,
+        ) -> anyhow::Result<()> {
+            tokio::join![
+                async {
+                    let _config = config.read().await;
+                    p!("task 5 start fetch balances");
+                    _config.fetch_balances(&tokens).await;
+                },
+                async {
+                    let _config = config.read().await;
+                    p!("task 5 start fetch allowance");
+                    _config.fetch_allowance(&tokens).await;
+                },
+            ];
+            Ok(())
+        }
+        let config = Arc::new(tokio::sync::RwLock::new(self.config.clone()));
+
+        let _tasks = tokio::try_join![
+            fetch_user_info(Arc::clone(&tokens), config),
+        ];
+
+        print("all done");
+
+        let tokens = tokens.read().await;
+
+        print(format!("tokens full: {:?}", tokens).as_str());
+        // re assign new tokens
+        self.config.tokens = tokens.to_vec();
+        print("all done");
+        Ok(())
+
+    }
+
+    async fn fetch_vault(&mut self) -> anyhow::Result<()> {
+        let tokens = self.load_tokens();
+        // p!("tokens: ", tokens);
+        let tokens = Arc::new(tokio::sync::RwLock::new(tokens));
+        let vault = Arc::new(tokio::sync::RwLock::new(self.vault.clone()));
+        // let tokens1 = Arc::clone(&tokens);
+        // let tokens2 = Arc::clone(&tokens);
+        let startTime = Instant::now();
+
+        print(
+            format!(
+                "RUST:: start fetch data, chain id: {:?}",
+                self.config.chain.chain_id
+            )
+                .as_str(),
+        );
+
+        async fn fetch_token_configuration(
+            tokens: TokensArc,
+            vault: VaultArc,
+        ) -> anyhow::Result<()> {
+            vault.read().await.fetch_token_configuration(tokens)
+                .await;
+
+            Ok(())
+        }
+        async fn fetch_vault_info(
+            tokens: TokensArc,
+            vault: VaultArc,
+        ) -> anyhow::Result<()> {
+            vault.read().await.fetch_vault_info(tokens).await;
+            print("task 2 done");
+            Ok(())
+        }
+        async fn fetch_token_prices(
+            tokens: TokensArc,
+            vault: VaultArc
+        ) -> anyhow::Result<()> {
+            vault.read().await.fetch_token_prices(tokens).await;
+            print("task 3 done");
+            Ok(())
+        }
+
+        async fn fetch_multi_vault_token_variables(
+            tokens: TokensArc,
+            vault: VaultArc,
+        ) -> anyhow::Result<()> {
+            let vault = vault.read().await;
+            vault
+                .fetch_multi_vault_token_variables(tokens)
+                .await;
+            print("task 4 done");
+                Ok(())
+        }
+        let config = Arc::new(tokio::sync::RwLock::new(self.config.clone()));
+
+        let _tasks = tokio::try_join![
+            fetch_token_configuration(Arc::clone(&tokens), Arc::clone(&vault)),
+            fetch_vault_info(Arc::clone(&tokens), Arc::clone(&vault)),
+            fetch_token_prices(Arc::clone(&tokens), Arc::clone(&vault)),
+            fetch_multi_vault_token_variables(Arc::clone(&tokens), Arc::clone(&vault)),
+        ];
+
+        print("all done");
+        p!("all done, time: {}", startTime.elapsed().as_millis());
+
+        let tokens = tokens.read().await;
+        // self.vault
+        //     .fetch_multi_vault_token_variables(&mut tokens)
+        //     .await;
+        print(format!("tokens full: {:?}", tokens).as_str());
+        // re assign new tokens
+        self.config.tokens = tokens.to_vec();
+
+        for token in self.config.tokens.iter_mut() {
+            token.calculate_available_liquidity();
+        }
+
+        print("all done");
+
+        Ok(())
+    }
+
 
     async fn fetch_data(&mut self) -> anyhow::Result<()> {
         let tokens = self.load_tokens();
