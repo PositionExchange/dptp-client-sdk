@@ -266,7 +266,7 @@ impl RouterTrait for Router {
             startTime: Instant,
         ) -> anyhow::Result<()> {
             p!("task 3 start after lock, elapsed: {:?}", startTime.elapsed());
-            vault.read().await.fetch_token_prices(tokens).await;
+            vault.read().await.fetch_token_prices(tokens).await.expect("fetch token prices");
             print("task 3 done");
             p!("task 3 done, time: {}", startTime.elapsed().as_millis());
             Ok(())
@@ -392,7 +392,7 @@ mod tests {
     async fn it_works_arb() {
         // 1. load config
         let mut router = Router::new();
-        router.initilize(421613).unwrap();
+        router.initilize(42161).unwrap();
 
         println!("spender {:?}", router.config.contract_spender);
         router.vault.init_vault_state().await.unwrap();
@@ -482,7 +482,7 @@ mod tests {
     #[tokio::test]
     async fn should_fetch_data_with_account_success() {
         let mut router = Router::new();
-        router.initilize(97).unwrap();
+        router.initilize(42161).unwrap();
         let account = "0x1e8b86cd1b420925030fe72a8fd16b47e81c7515".to_string();
         println!("****** set account *****");
 
@@ -514,7 +514,7 @@ mod tests {
     #[tokio::test]
     async fn get_buy_glp_to_amount() {
         let mut router = Router::new();
-        router.initilize(421613).unwrap();
+        router.initilize(42161).unwrap();
         router.vault.init_vault_state().await.unwrap();
 
         router.calculate_price_plp();
@@ -546,7 +546,7 @@ mod tests {
     #[tokio::test]
     async fn get_buy_glp_from_amount() {
         let mut router = Router::new();
-        router.initilize(421613).unwrap();
+        router.initilize(42161).unwrap();
         router.vault.init_vault_state().await.unwrap();
 
         router.calculate_price_plp();

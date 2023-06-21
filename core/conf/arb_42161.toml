@@ -1,0 +1,144 @@
+# Arbitrum One
+[chain]
+chain_id = 42161
+rpc_urls = [
+    "https://endpoints.omniatech.io/v1/arbitrum/one/public",
+    "https://arb-mainnet-public.unifra.io",
+    "https://arb1.arbitrum.io/rpc"
+
+]
+multicall_address = "0x8DaE0E724d1D6CB74Bb869bF7E2a0129613A6BE6"
+
+[contract_address]
+vault = "0x79061aE2B6bd18c2Eb421Da730d3ad47C303A65D"
+plp_manager = "0xd88f56DE1C624e1d44C08C9302aF287d6a6a8222"
+plp_token = "0xE6102D09eC5ed79E429f94E5b4cb482E96157290"
+
+reward_tracker_fee_plp = "0x45f2FD915f916f07176F4908E40DEdA7d9E62A13"
+reward_router = "0xA0B332Fef8fa7860148C95130714495b6DabDA9F"
+vester_plp = "0x5b60f8F49Fb949bb123ec4F2a33f939bCCa03020"
+futurx_gateway = "0xcC8eE31D3d62f69fE1289589E82fFb1bE35eE37D"
+
+
+[[contract_spender]]
+address = "0xd88f56DE1C624e1d44C08C9302aF287d6a6a8222"
+name = "lp_manager"
+
+[[contract_spender]]
+address = "0xcC8eE31D3d62f69fE1289589E82fFb1bE35eE37D"
+name = "futurx_gateway"
+
+
+[[tokens]]
+chain_id = 42161
+address = "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
+symbol = "USDT"
+decimals = 6
+name = "USD-Tether"
+is_whitlisted = true
+is_tradeable = true
+quote_precision = 4
+is_stable_token = true
+logo_url = "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF775485246999027B3197955.png"
+
+[[tokens]]
+chain_id = 42161
+address = "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8"
+symbol = "USDC"
+decimals = 6
+name = "USD-Coin"
+is_whitlisted = true
+is_tradeable = true
+quote_precision = 4
+is_stable_token = true
+logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png"
+
+[[tokens]]
+chain_id = 42161
+address = "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f"
+symbol = "BTC"
+decimals = 8
+name = "Bitcoin"
+is_whitelisted = true
+is_tradeable = true
+quote_precision = 8
+is_stable_token = false
+logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/1.png"
+
+
+[[tokens]]
+chain_id = 42161
+address = "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1"
+symbol = "DAI"
+decimals = 18
+name = "DAI Token"
+is_whitlisted = true
+is_tradeable = true
+is_stable_token = true
+quote_precision = 4
+logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/4943.png"
+
+
+[[tokens]]
+chain_id = 42161
+address = "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+symbol = "ETH"
+decimals = 18
+name = "Ethereum"
+is_whitlisted = true
+is_tradeable = true
+is_stable_token = false
+quote_precision = 8
+logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png"
+is_native_token = true
+
+
+[[tokens]]
+chain_id = 42161
+address = "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4"
+symbol = "LINK"
+decimals = 18
+name = "Chainlink"
+is_whitlisted = true
+is_tradeable = true
+is_stable_token = false
+quote_precision = 4
+logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/1975.png"
+is_native_token = false
+
+[[tokens]]
+chain_id = 42161
+address = "0xE6102D09eC5ed79E429f94E5b4cb482E96157290"
+symbol = "PLP"
+decimals = 18
+name = "Position LP"
+is_whitelisted = true
+is_tradeable = false
+is_stable_token = false
+quote_precision = 4
+logo_url = "https://statics.position.exchange/assets/dptp/trading/plp_logo.svg"
+
+[[tokens]]
+chain_id = 42161
+address = "0x45f2FD915f916f07176F4908E40DEdA7d9E62A13"
+symbol = "fPLP"
+decimals = 18
+name = "Fee PLP"
+is_whitelisted = true
+is_tradeable = false
+is_stable_token = false
+quote_precision = 4
+logo_url = ""
+
+[[tokens]]
+chain_id = 42161
+address = "0x5203e019b96A556A8b7eECBBd00964Cf4Bdef87f"
+symbol = "fsPLP"
+decimals = 18
+name = "Position Fee Stake LP"
+is_whitelisted = true
+is_tradeable = false
+is_stable_token = false
+quote_precision = 4
+logo_url = "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/smartchain/assets/0x5CA42204cDaa70d5c773946e69dE942b85CA6706/logo.png"
+
