@@ -103,12 +103,13 @@ impl WasmRouter {
     }
 
     #[wasm_bindgen]
-    pub fn load_tokens(&self) -> JsValue {
+    pub fn load_tokens(&self) -> Result<JsValue, JsValue> {
         log::info!("start load_tokens");
+        let router = self.router.try_borrow().map_err(|e| JsValue::from_str(&e.to_string()))?;
 
-        let tokens = self.router.borrow().load_tokens();
+        let tokens = router.load_tokens();
         log::info!("done load_tokens");
-        return to_value(&tokens).unwrap();
+        Ok(to_value(&tokens).unwrap())
     }
     //
     // pub fn load_tokens_string(&self) -> String {
@@ -241,26 +242,29 @@ impl WasmRouter {
 
     // Note: Need to call init_vault_state first
     #[wasm_bindgen]
-    pub fn get_vault_state(&self) -> JsValue {
-        let vault_state = self.router.borrow().vault.state.clone();
-        to_value(&vault_state).unwrap()
+    pub fn get_vault_state(&self) -> Result<JsValue, JsValue> {
+        let router = self.router.try_borrow().map_err(|e| JsValue::from_str(&e.to_string()))?;
+        let vault_state = router.vault.state.clone();
+        Ok(to_value(&vault_state).unwrap())
     }
 
     #[wasm_bindgen]
-    pub fn get_contract_address(&self) -> JsValue {
-        let contract_address = &self.router.borrow().config.contract_address;
-        to_value(&contract_address).unwrap()
+    pub fn get_contract_address(&self) -> Result<JsValue, JsValue> {
+        let router = self.router.try_borrow().map_err(|e| JsValue::from_str(&e.to_string()))?;
+        let contract_address = &router.config.contract_address;
+        Ok(to_value(&contract_address).unwrap())
     }
 
     // Buy GLP to token ( exact token to token)
     #[wasm_bindgen]
-    pub fn get_buy_glp_from_amount(&self, to_amount: &str, token_address: &str) -> JsValue {
+    pub fn get_buy_glp_from_amount(&self, to_amount: &str, token_address: &str) -> Result<JsValue, JsValue> {
         let mut buy_glp = GetAmountOut {
             amount_out: U256::from(0),
             fee_basis_point: 0,
             mapping_fee_token: HashMap::new(),
         };
-        for token_element in self.router.borrow().config.tokens.iter() {
+        let router = self.router.try_borrow().map_err(|e| JsValue::from_str(&e.to_string()))?;
+        for token_element in router.config.tokens.iter() {
             if token_element.is_tradeable.unwrap() {
                 let amount = U256::from_dec_str(to_amount).unwrap();
 
@@ -281,19 +285,20 @@ impl WasmRouter {
                 }
             }
         }
-        return to_value(&buy_glp).unwrap();
+        Ok(to_value(&buy_glp).unwrap())
     }
 
     // Buy GLP to token ( token to exact token)
     #[wasm_bindgen]
-    pub fn get_buy_glp_to_amount(&self, to_amount: &str, token_address: &str) -> JsValue {
+    pub fn get_buy_glp_to_amount(&self, to_amount: &str, token_address: &str) -> Result<JsValue, JsValue> {
         let mut buy_glp = GetAmountOut {
             amount_out: U256::from(0),
             fee_basis_point: 0,
             mapping_fee_token: HashMap::new(),
         };
+        let router = self.router.try_borrow().map_err(|e| JsValue::from_str(&e.to_string()))?;
 
-        for token_element in self.router.borrow().config.tokens.iter() {
+        for token_element in router.config.tokens.iter() {
             if token_element.is_tradeable.unwrap() {
                 let amount = U256::from_dec_str(to_amount).unwrap();
                 let (glp_amount, fee_basis_point) = self
@@ -313,18 +318,19 @@ impl WasmRouter {
                 }
             }
         }
-        return to_value(&buy_glp).unwrap();
+        Ok(to_value(&buy_glp).unwrap())
     }
 
     // Sell GLP to token ( token to exact token)
     #[wasm_bindgen]
-    pub fn get_sell_glp_to_amount(&mut self, to_amount: &str, token_address: &str) -> JsValue {
+    pub fn get_sell_glp_to_amount(&mut self, to_amount: &str, token_address: &str) -> Result<JsValue, JsValue> {
         let mut buy_glp = GetAmountOut {
             amount_out: U256::from(0),
             fee_basis_point: 0,
             mapping_fee_token: HashMap::new(),
         };
-        for token_element in self.router.borrow().config.tokens.iter() {
+        let router = self.router.try_borrow().map_err(|e| JsValue::from_str(&e.to_string()))?;
+        for token_element in router.config.tokens.iter() {
             if token_element.is_tradeable.unwrap() {
                 let amount = U256::from_dec_str(to_amount).unwrap();
                 let (glp_amount, fee_basis_point) = self
@@ -344,18 +350,19 @@ impl WasmRouter {
                 }
             }
         }
-        return to_value(&buy_glp).unwrap();
+        Ok(to_value(&buy_glp).unwrap())
     }
 
     // Sell GLP from amount ( exact token to token)
     #[wasm_bindgen]
-    pub fn get_sell_glp_from_amount(&mut self, to_amount: &str, token_address: &str) -> JsValue {
+    pub fn get_sell_glp_from_amount(&mut self, to_amount: &str, token_address: &str) -> Result<JsValue, JsValue> {
         let mut buy_glp = GetAmountOut {
             amount_out: U256::from(0),
             fee_basis_point: 0,
             mapping_fee_token: HashMap::new(),
         };
-        for token_element in self.router.borrow().config.tokens.iter() {
+        let router = self.router.try_borrow().map_err(|e| JsValue::from_str(&e.to_string()))?;
+        for token_element in router.config.tokens.iter() {
             if token_element.is_tradeable.unwrap() {
                 let amount = U256::from_dec_str(to_amount).unwrap();
 
@@ -376,7 +383,7 @@ impl WasmRouter {
                 }
             }
         }
-        return to_value(&buy_glp).unwrap();
+        Ok(to_value(&buy_glp).unwrap())
     }
 
     #[wasm_bindgen]
@@ -386,14 +393,15 @@ impl WasmRouter {
         token_usdg_amount: u64,
         usdp_delta: u64,
         increment: bool,
-    ) -> JsValue {
-        let fee_basis_point = self.router.borrow().vault.state.get_fee_basis_points(
+    ) -> Result<JsValue, JsValue> {
+        let router = self.router.try_borrow().map_err(|e| JsValue::from_str(&e.to_string()))?;
+        let fee_basis_point = router.vault.state.get_fee_basis_points(
             token_weight,
             &U256::from(token_usdg_amount),
             &U256::from(usdp_delta),
             increment,
         );
-        to_value(&fee_basis_point).unwrap()
+        Ok(to_value(&fee_basis_point).unwrap())
     }
 
     /// Get the amount of token out for a given amount of token in
@@ -408,7 +416,7 @@ impl WasmRouter {
         token_in: String,
         token_out: String,
         amount_in: String,
-    ) -> JsValue {
+    ) -> Result<JsValue, JsValue> {
         let token_in = self
             .router
             .borrow()
@@ -421,22 +429,24 @@ impl WasmRouter {
             .config
             .get_token_by_token_address(token_out)
             .expect("token_out not found");
-        let (amount_out, fee_amount, fees_bps) = self.router.borrow().vault.state.get_swap_details(
+        let router = self.router.try_borrow().map_err(|e| JsValue::from_str(&e.to_string()))?;
+        let (amount_out, fee_amount, fees_bps) = router.vault.state.get_swap_details(
             &token_in,
             &token_out,
             U256::from_dec_str(&amount_in.to_string()).unwrap(),
         );
-        to_value(&SwapDetails {
+        let result = SwapDetails {
             amount_out: amount_out.to_string(),
             fee_amount: fee_amount.to_string(),
             fees_bps: fees_bps.to_string(),
-        })
-        .unwrap()
+        };
+        Ok(to_value(&result).unwrap())
     }
 
     #[wasm_bindgen]
-    pub fn get_plp_price(&self, is_buy: bool) -> JsValue {
-        to_value(&self.router.borrow().vault.state.get_plp_price(is_buy)).unwrap()
+    pub fn get_plp_price(&self, is_buy: bool) -> Result<JsValue, JsValue> {
+        let router = self.router.try_borrow().map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(to_value(&router.vault.state.get_plp_price(is_buy)).unwrap())
     }
 
     #[wasm_bindgen(getter)]
