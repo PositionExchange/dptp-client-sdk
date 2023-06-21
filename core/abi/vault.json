@@ -1,26 +1,5 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "vaultUtils_",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "vaultPriceFeed_",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "usdp_",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
     "anonymous": false,
     "inputs": [
       {
@@ -62,6 +41,69 @@
     "inputs": [
       {
         "indexed": false,
+        "internalType": "uint256",
+        "name": "positionFee",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "borrowFee",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "totalFee",
+        "type": "uint256"
+      }
+    ],
+    "name": "CollectFees",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "DecreaseDebtAmount",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "DecreaseGuaranteedUsd",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
         "internalType": "address",
         "name": "token",
         "type": "address"
@@ -74,6 +116,19 @@
       }
     ],
     "name": "DecreasePoolAmount",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "DecreasePositionReserves",
     "type": "event"
   },
   {
@@ -120,6 +175,44 @@
       {
         "indexed": false,
         "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "IncreaseDebtAmount",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "IncreaseFeeReserves",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
         "name": "token",
         "type": "address"
       },
@@ -150,6 +243,19 @@
       }
     ],
     "name": "IncreasePoolAmount",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "IncreasePositionReserves",
     "type": "event"
   },
   {
@@ -188,6 +294,19 @@
       }
     ],
     "name": "IncreaseUsdgAmount",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint8",
+        "name": "version",
+        "type": "uint8"
+      }
+    ],
+    "name": "Initialized",
     "type": "event"
   },
   {
@@ -354,6 +473,19 @@
   },
   {
     "inputs": [],
+    "name": "BORROWING_RATE_PRECISION",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "DEAFULT_DECIMALS",
     "outputs": [
       {
@@ -367,7 +499,7 @@
   },
   {
     "inputs": [],
-    "name": "FUNDING_RATE_PRECISION",
+    "name": "MAX_BORROWING_RATE_FACTOR",
     "outputs": [
       {
         "internalType": "uint256",
@@ -393,46 +525,7 @@
   },
   {
     "inputs": [],
-    "name": "MAX_FUNDING_RATE_FACTOR",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "MAX_LIQUIDATION_FEE_USD",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "MIN_FUNDING_RATE_INTERVAL",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "MIN_LEVERAGE",
+    "name": "MIN_BORROWING_RATE_INTERVAL",
     "outputs": [
       {
         "internalType": "uint256",
@@ -458,7 +551,88 @@
   },
   {
     "inputs": [],
-    "name": "USDG_DECIMALS",
+    "name": "WEI_DECIMALS",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_account",
+        "type": "address"
+      },
+      {
+        "internalType": "address[]",
+        "name": "_path",
+        "type": "address[]"
+      },
+      {
+        "internalType": "address",
+        "name": "_indexToken",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "_isLong",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_feeToken",
+        "type": "uint256"
+      }
+    ],
+    "name": "addCollateral",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "adjustDecimalToToken",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "adjustDecimalToUsd",
     "outputs": [
       {
         "internalType": "uint256",
@@ -603,11 +777,88 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_collateralToken",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_account",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "_isLong",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amountOutUsd",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "_receiver",
+        "type": "address"
+      }
+    ],
+    "name": "claimFund",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "",
         "type": "address"
       }
     ],
     "name": "cumulativeBorrowingRates",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "debtAmount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "debtAmountUsd",
     "outputs": [
       {
         "internalType": "uint256",
@@ -637,7 +888,12 @@
       },
       {
         "internalType": "uint256",
-        "name": "_sizeDelta",
+        "name": "_entryPrice",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_sizeDeltaToken",
         "type": "uint256"
       },
       {
@@ -692,6 +948,19 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "futurXGateway",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -700,6 +969,25 @@
       }
     ],
     "name": "getAskPrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_collateralToken",
+        "type": "address"
+      }
+    ],
+    "name": "getAvailableReservedAmount",
     "outputs": [
       {
         "internalType": "uint256",
@@ -745,11 +1033,6 @@
         "internalType": "address",
         "name": "_indexToken",
         "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_amountInUsd",
-        "type": "uint256"
       },
       {
         "internalType": "bool",
@@ -897,6 +1180,81 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_account",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_indexToken",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "_isLong",
+        "type": "bool"
+      }
+    ],
+    "name": "getPositionInfo",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "reservedAmount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint128",
+            "name": "entryBorrowingRates",
+            "type": "uint128"
+          },
+          {
+            "internalType": "address",
+            "name": "collateralToken",
+            "type": "address"
+          }
+        ],
+        "internalType": "struct PositionInfo.Data",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_trader",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_indexToken",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "_isLong",
+        "type": "bool"
+      }
+    ],
+    "name": "getPositionInfoKey",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "_token",
         "type": "address"
       },
@@ -921,11 +1279,115 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_tokenIn",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_tokenOut",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amountIn",
+        "type": "uint256"
+      }
+    ],
+    "name": "getSwapFee",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "_token",
         "type": "address"
       }
     ],
     "name": "getTargetUsdpAmount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      }
+    ],
+    "name": "getTokenConfiguration",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bool",
+            "name": "isWhitelisted",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint8",
+            "name": "tokenDecimals",
+            "type": "uint8"
+          },
+          {
+            "internalType": "bool",
+            "name": "isStableToken",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "isShortableToken",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint64",
+            "name": "minProfitBasisPoints",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint128",
+            "name": "tokenWeight",
+            "type": "uint128"
+          },
+          {
+            "internalType": "uint128",
+            "name": "maxUsdpAmount",
+            "type": "uint128"
+          }
+        ],
+        "internalType": "struct TokenConfiguration.Data",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      }
+    ],
+    "name": "getUtilisation",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1038,7 +1500,12 @@
       },
       {
         "internalType": "uint256",
-        "name": "_sizeDelta",
+        "name": "_entryPrice",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_sizeDeltaToken",
         "type": "uint256"
       },
       {
@@ -1053,6 +1520,29 @@
       }
     ],
     "name": "increasePosition",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "vaultUtils_",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "vaultPriceFeed_",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "usdp_",
+        "type": "address"
+      }
+    ],
+    "name": "initialize",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1128,8 +1618,46 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_trader",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_collateralToken",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_indexToken",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_positionSize",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_positionMargin",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "_isLong",
+        "type": "bool"
+      }
+    ],
+    "name": "liquidatePosition",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
-    "name": "liquidationFeeUsd",
+    "name": "marginFeeBasisPoints",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1142,7 +1670,7 @@
   },
   {
     "inputs": [],
-    "name": "marginFeeBasisPoints",
+    "name": "maxGasPrice",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1257,12 +1785,22 @@
         "type": "bytes32"
       }
     ],
-    "name": "positionEntryBorrowingRates",
+    "name": "positionInfo",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "reservedAmount",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint128",
+        "name": "entryBorrowingRates",
+        "type": "uint128"
+      },
+      {
+        "internalType": "address",
+        "name": "collateralToken",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -1279,6 +1817,39 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_account",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_collateralToken",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_indexToken",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "_isLong",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amountInToken",
+        "type": "uint256"
+      }
+    ],
+    "name": "removeCollateral",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -1449,11 +2020,6 @@
       },
       {
         "internalType": "uint256",
-        "name": "_liquidationFeeUsd",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
         "name": "_minProfitTime",
         "type": "uint256"
       },
@@ -1485,73 +2051,11 @@
     "inputs": [
       {
         "internalType": "bool",
-        "name": "_inPrivateLiquidationMode",
-        "type": "bool"
-      }
-    ],
-    "name": "setInPrivateLiquidationMode",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bool",
-        "name": "_isLeverageEnabled",
-        "type": "bool"
-      }
-    ],
-    "name": "setIsLeverageEnabled",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bool",
         "name": "_isSwapEnabled",
         "type": "bool"
       }
     ],
     "name": "setIsSwapEnabled",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_liquidator",
-        "type": "address"
-      },
-      {
-        "internalType": "bool",
-        "name": "_isActive",
-        "type": "bool"
-      }
-    ],
-    "name": "setLiquidator",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_manager",
-        "type": "address"
-      },
-      {
-        "internalType": "bool",
-        "name": "_isManager",
-        "type": "bool"
-      }
-    ],
-    "name": "setManager",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1590,19 +2094,6 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "_maxLeverage",
-        "type": "uint256"
-      }
-    ],
-    "name": "setMaxLeverage",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "address",
         "name": "_feed",
         "type": "address"
@@ -1634,26 +2125,8 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_token",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "setUsdpAmount",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "contract IVaultUtils",
-        "name": "_vaultUtils",
+        "name": "_address",
         "type": "address"
       }
     ],
@@ -1800,6 +2273,35 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_tokenIn",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_tokenOut",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_receiver",
+        "type": "address"
+      }
+    ],
+    "name": "swapWithoutFees",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "taxBasisPoints",
     "outputs": [
@@ -1912,7 +2414,55 @@
         "type": "uint256"
       }
     ],
+    "name": "tokenToUsdMax",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_tokenAmount",
+        "type": "uint256"
+      }
+    ],
     "name": "tokenToUsdMin",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_tokenAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "tokenToUsdMinWithAdjustment",
     "outputs": [
       {
         "internalType": "uint256",
@@ -2035,6 +2585,30 @@
       }
     ],
     "name": "usdToTokenMin",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_usdAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "usdToTokenMinWithAdjustment",
     "outputs": [
       {
         "internalType": "uint256",
@@ -2176,19 +2750,6 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "whitelistedTokenCount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
       }
     ],
     "stateMutability": "view",
