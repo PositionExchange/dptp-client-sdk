@@ -44,9 +44,9 @@ logo_url = "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF7754852
 [[tokens]]
 chain_id = 42161
 address = "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8"
-symbol = "USDC"
+symbol = "USDC.e"
 decimals = 6
-name = "USD-Coin"
+name = "Bridge USDC"
 is_whitlisted = true
 is_tradeable = true
 quote_precision = 4
@@ -56,9 +56,9 @@ logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png"
 [[tokens]]
 chain_id = 42161
 address = "0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f"
-symbol = "BTC"
+symbol = "WBTC"
 decimals = 8
-name = "Bitcoin"
+name = "Wrap Bitcoin"
 is_whitelisted = true
 is_tradeable = true
 quote_precision = 8
