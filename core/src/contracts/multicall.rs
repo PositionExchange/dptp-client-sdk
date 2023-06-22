@@ -7,7 +7,10 @@ use ethers::{
 use std::sync::Arc;
 use crate::{config::Chain, log};
 use async_trait::async_trait;
+use ethers::prelude::{contracts, Middleware};
+use ethers::types::{BlockId, BlockNumber};
 use rand::Rng;
+use serde::de::Unexpected::Option;
 
 abigen!(
     Multicall,
@@ -21,6 +24,8 @@ pub trait ChainMulticallTrait {
     //! pass the interface and function name to decode the return data
     async fn execute_multicall(&self, calls: Vec<(Address, Bytes)>, interface: String, fn_name: &str) -> Result<Vec<Vec<Token>>, String>;
     async fn execute_multicall_raw(&self, calls: Vec<(Address, Bytes)>) -> Result<Vec<Bytes>, String>;
+    async fn get_balance(&self, address: &String) -> Result<U256, String>;
+    fn random_rpc(&self) -> usize;
 }
 
 #[async_trait(?Send)]
@@ -31,17 +36,9 @@ impl ChainMulticallTrait for Chain {
         Ok(decode_return_data(return_data.unwrap(), interface.clone(), fn_name))
     }
     async fn execute_multicall_raw(&self, calls: Vec<(Address, Bytes)>) -> Result<Vec<Bytes>, String>{
-        // let mut rng = rand::thread_rng();
-        // random rpc
-        // let random_index =if self.rpc_urls.len() > 1  {rng.gen_range(0..(self.rpc_urls.len() - 1))} else {0};
-        let random_index = {
-            let mut rng = rand::thread_rng();
-            if self.rpc_urls.len() > 1 {
-                rng.gen_range(0..(self.rpc_urls.len() - 1))
-            } else {
-                0
-            }
-        };
+
+
+        let random_index = self.random_rpc();
 
         log::print(format!("random_index {}, rpcs: {}", random_index, self.rpc_urls.len()).as_str());
 
@@ -53,6 +50,32 @@ impl ChainMulticallTrait for Chain {
         let (_block_number, return_data) = multicall.aggregate(calls).call().await.expect("Failed to execute multicall");
         log::print(format!("multicall done {}", return_data.len()).as_str());
         Ok(return_data)
+    }
+
+    async fn get_balance(&self, address: &String) -> Result<U256, String> {
+
+        let addr: Address = address.parse().expect("Invalid account");
+
+        let provider = Provider::<Http>::try_from(self.rpc_urls[self.random_rpc()].clone()).expect("Invalid provider");
+        let block_number = Some(BlockId::Number(BlockNumber::Number(provider.get_block_number().await.unwrap())));
+
+        let balance = provider.get_balance(addr, block_number).await.expect("Failed to get balance");
+        Ok(balance)
+
+    }
+
+    fn random_rpc(&self) -> usize {
+        let random_index = {
+            let mut rng = rand::thread_rng();
+            if self.rpc_urls.len() > 1 {
+                rng.gen_range(0..(self.rpc_urls.len() - 1))
+            } else {
+                0
+            }
+        };
+
+        return random_index as usize;
+
     }
 }
 

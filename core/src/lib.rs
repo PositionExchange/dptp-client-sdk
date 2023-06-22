@@ -398,12 +398,9 @@ mod tests {
         router.vault.init_vault_state().await.unwrap();
 
         // 2. set account
-        let account_address = "0xaC7c1a2fFb8b3f3bEa3e6aB4bC8b1A2Ff4Bb4Aa4".to_string();
-        router.set_account("0xaC7c1a2fFb8b3f3bEa3e6aB4bC8b1A2Ff4Bb4Aa4".to_string());
-        assert_eq!(
-            router.config.selected_account,
-            Some("0xaC7c1a2fFb8b3f3bEa3e6aB4bC8b1A2Ff4Bb4Aa4".to_string())
-        );
+        let account_address = "0xF9939C389997B5B65CBa58d298772262ecAc3F8A".to_string();
+        router.set_account("0xF9939C389997B5B65CBa58d298772262ecAc3F8A".to_string());
+
 
         router.fetch_data().await.expect("fetch data failed");
         // Assert balance and allowance

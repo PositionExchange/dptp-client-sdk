@@ -31,9 +31,17 @@ impl GlobalFetch for Config {
         }).collect();
         let results = self.chain.execute_multicall(calls, include_str!("../../abi/erc20.json").to_string(), "balanceOf").await.unwrap();
         let mut update_tokens = update_tokens.write().await;
+
+        let balance_eth = self.chain.get_balance(&self.selected_account.clone().unwrap()).await.unwrap();
+
         for (token, result) in update_tokens.iter_mut().zip(results) {
             let balance = result[0].clone().into_uint().expect("failed to parse balance");
-            token.update_balance(&account, balance);
+
+            if token.is_native_token.is_some() {
+                token.update_balance(&account, balance_eth);
+            }else {
+                token.update_balance(&account, balance);
+            }
         }
         println!("[DEBUGPRINT] fetch_balances: {:?}", update_tokens);
         // we update here ensure the old value get updated
@@ -63,8 +71,6 @@ impl GlobalFetch for Config {
                 index = index + 1;
             })
         });
-
-
 
 
         Ok(())
