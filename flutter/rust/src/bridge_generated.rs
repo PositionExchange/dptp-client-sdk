@@ -67,6 +67,33 @@ pub extern "C" fn wire_get_swap_details(
 }
 
 #[no_mangle]
+pub extern "C" fn wire_get_price_plp(port_: i64, is_buy: bool) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "get_price_plp",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_is_buy = is_buy.wire2api();
+            move |task_callback| Ok(get_price_plp(api_is_buy))
+        },
+    )
+}
+
+#[no_mangle]
+pub extern "C" fn wire_get_vault_state(port_: i64) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap(
+        WrapInfo {
+            debug_name: "get_vault_state",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || move |task_callback| Ok(get_vault_state()),
+    )
+}
+
+#[no_mangle]
 pub extern "C" fn wire_fetch_async(port_: i64, chain_id: u64, account: *mut wire_uint_8_list) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap(
         WrapInfo {
@@ -129,6 +156,12 @@ impl Wire2Api<String> for *mut wire_uint_8_list {
     fn wire2api(self) -> String {
         let vec: Vec<u8> = self.wire2api();
         String::from_utf8_lossy(&vec).into_owned()
+    }
+}
+
+impl Wire2Api<bool> for bool {
+    fn wire2api(self) -> bool {
+        self
     }
 }
 

@@ -1,4 +1,4 @@
-use core::contracts::{token::Token, vault_logic::VaultLogic};
+use core::contracts::{token::Token, vault_logic::VaultLogic, vault::VaultState};
 use core::*;
 use futures::executor::block_on;
 use serde::{Deserialize, Serialize};
@@ -44,10 +44,6 @@ impl FlutterRouter {
         self.router.fetch_data().await;
     }
 
-    pub fn get_router(&mut self) -> Router {
-        self.router.clone()
-    }
-
     pub async fn init_vault_state(&mut self) {
         self.router.vault.init_vault_state().await;
     }
@@ -79,6 +75,14 @@ impl FlutterRouter {
             fees_bps: fees_bps.to_string(),
         }
     }
+
+    pub fn get_price_plp(&mut self, is_buy: bool) -> U256 {
+        U256::from(&self.router.vault.state.get_plp_price(is_buy))
+    }
+
+    pub fn get_vault_state(&mut self) -> VaultState {
+        self.router.vault.state.clone()
+    }
 }
 
 #[dynamic]
@@ -101,6 +105,19 @@ pub fn get_swap_details(token_in: String, token_out: String, amount_in: String) 
     let serialized = to_string(&swap_detail).unwrap();
     serialized
 }
+
+pub fn get_price_plp(is_buy: bool) -> String {
+    let price: U256 = FLUTTER_ROUTER.write().get_price_plp(is_buy);
+    let serialized = to_string(&price).unwrap();
+    serialized
+}
+
+pub fn get_vault_state() -> String {
+    let state: VaultState = FLUTTER_ROUTER.write().get_vault_state();
+    let serialized = to_string(&state).unwrap();
+    serialized
+}
+
 //
 // pub fn get_router() -> String {
 //     let router = FLUTTER_ROUTER.write().get_router();
@@ -144,23 +161,23 @@ mod tests {
     fn it_works() {
         // 1. load config
         fetch_async(
-            421613,
-            "".to_string(),
+            42161,
+            "0xaC7c1a2fFb8b3f3bEa3e6aB4bC8b1A2Ff4Bb4Aa4".to_string(),
         );
         // initialize(421613);
         // set_account("0xaC7c1a2fFb8b3f3bEa3e6aB4bC8b1A2Ff4Bb4Aa4".to_string());
         // fetch_data();
         // init_vault_state();
         // calculate_price_plp();
-        let tokens = load_tokens();
-        let detail = get_swap_details(
-            "0x38193a1c61b2b44446289265580f73746f5bb5ae".to_owned(),
-            "0xa8cc0c527a271c7d196f12c23a65dbfb58c033f5".to_owned(),
-            "10000000000".to_owned(),
-        );
-        // let router = get_router();
-        println!("Loaded tokens: {:?}", tokens);
-        println!("token detail: {:?}", detail);
+        // let tokens = load_tokens();
+        // let detail = get_swap_details(
+        //     "0x38193a1c61b2b44446289265580f73746f5bb5ae".to_owned(),
+        //     "0xa8cc0c527a271c7d196f12c23a65dbfb58c033f5".to_owned(),
+        //     "10000000000".to_owned(),
+        // );
+        let state = get_price_plp(true);
+        println!("Loaded tokens: {:?}", state);
+        // println!("token detail: {:?}", detail);
         // assert_eq!(tokens.len(), 3);
         // assert_eq!(tokens[0].symbol, "USDT");
         // assert_eq!(tokens[1].symbol, "BTC");

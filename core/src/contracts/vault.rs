@@ -48,7 +48,7 @@ pub struct VaultState {
     pub reserved_amount : Option<HashMap<Address, U256>>
 }
 
-#[derive(Default, Debug, Clone, Serialize)]
+#[derive(Default, Debug, Clone)]
 pub struct Vault {
     pub vault_addr: String,
     pub plp_manager: String,

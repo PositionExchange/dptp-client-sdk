@@ -26,6 +26,10 @@ void wire_get_swap_details(int64_t port_,
                            struct wire_uint_8_list *token_out,
                            struct wire_uint_8_list *amount_in);
 
+void wire_get_price_plp(int64_t port_, bool is_buy);
+
+void wire_get_vault_state(int64_t port_);
+
 void wire_fetch_async(int64_t port_, uint64_t chain_id, struct wire_uint_8_list *account);
 
 struct wire_uint_8_list *new_uint_8_list(int32_t len);
@@ -39,6 +43,8 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_initialize);
     dummy_var ^= ((int64_t) (void*) wire_load_tokens);
     dummy_var ^= ((int64_t) (void*) wire_get_swap_details);
+    dummy_var ^= ((int64_t) (void*) wire_get_price_plp);
+    dummy_var ^= ((int64_t) (void*) wire_get_vault_state);
     dummy_var ^= ((int64_t) (void*) wire_fetch_async);
     dummy_var ^= ((int64_t) (void*) new_uint_8_list);
     dummy_var ^= ((int64_t) (void*) free_WireSyncReturnStruct);

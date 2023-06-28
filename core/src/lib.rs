@@ -22,7 +22,7 @@ use log::*;
 
 // use contracts::vault_logic;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct Router {
     pub config: config::Config,
     pub vault: Vault,
@@ -72,8 +72,7 @@ impl RouterTrait for Router {
             &contract_address.plp_manager.to_lowercase(),
             &contract_address.plp_token.to_lowercase(),
             &self.config.chain,
-            contract_address
-
+            Rc::new(RefCell::new(contract_address)),
         );
         for token in self.config.tokens.iter_mut() {
             token.address = token.address.to_lowercase();

@@ -28,6 +28,14 @@ abstract class DptpSdk {
 
   FlutterRustBridgeTaskConstMeta get kGetSwapDetailsConstMeta;
 
+  Future<String> getPricePlp({required bool isBuy, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kGetPricePlpConstMeta;
+
+  Future<String> getVaultState({dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kGetVaultStateConstMeta;
+
   Future<void> fetchAsync(
       {required int chainId, required String account, dynamic hint});
 
@@ -95,6 +103,36 @@ class DptpSdkImpl extends FlutterRustBridgeBase<DptpSdkWire>
         argNames: ["tokenIn", "tokenOut", "amountIn"],
       );
 
+  Future<String> getPricePlp({required bool isBuy, dynamic hint}) =>
+      executeNormal(FlutterRustBridgeTask(
+        callFfi: (port_) => inner.wire_get_price_plp(port_, isBuy),
+        parseSuccessData: _wire2api_String,
+        constMeta: kGetPricePlpConstMeta,
+        argValues: [isBuy],
+        hint: hint,
+      ));
+
+  FlutterRustBridgeTaskConstMeta get kGetPricePlpConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "get_price_plp",
+        argNames: ["isBuy"],
+      );
+
+  Future<String> getVaultState({dynamic hint}) =>
+      executeNormal(FlutterRustBridgeTask(
+        callFfi: (port_) => inner.wire_get_vault_state(port_),
+        parseSuccessData: _wire2api_String,
+        constMeta: kGetVaultStateConstMeta,
+        argValues: [],
+        hint: hint,
+      ));
+
+  FlutterRustBridgeTaskConstMeta get kGetVaultStateConstMeta =>
+      const FlutterRustBridgeTaskConstMeta(
+        debugName: "get_vault_state",
+        argNames: [],
+      );
+
   Future<void> fetchAsync(
           {required int chainId, required String account, dynamic hint}) =>
       executeNormal(FlutterRustBridgeTask(
@@ -115,6 +153,10 @@ class DptpSdkImpl extends FlutterRustBridgeBase<DptpSdkWire>
   // Section: api2wire
   ffi.Pointer<wire_uint_8_list> _api2wire_String(String raw) {
     return _api2wire_uint_8_list(utf8.encoder.convert(raw));
+  }
+
+  int _api2wire_bool(bool raw) {
+    return raw ? 1 : 0;
   }
 
   int _api2wire_u64(int raw) {
@@ -228,6 +270,36 @@ class DptpSdkWire implements FlutterRustBridgeWireBase {
   late final _wire_get_swap_details = _wire_get_swap_detailsPtr.asFunction<
       void Function(int, ffi.Pointer<wire_uint_8_list>,
           ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_uint_8_list>)>();
+
+  void wire_get_price_plp(
+    int port_,
+    bool is_buy,
+  ) {
+    return _wire_get_price_plp(
+      port_,
+      is_buy,
+    );
+  }
+
+  late final _wire_get_price_plpPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Bool)>>(
+          'wire_get_price_plp');
+  late final _wire_get_price_plp =
+      _wire_get_price_plpPtr.asFunction<void Function(int, bool)>();
+
+  void wire_get_vault_state(
+    int port_,
+  ) {
+    return _wire_get_vault_state(
+      port_,
+    );
+  }
+
+  late final _wire_get_vault_statePtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+          'wire_get_vault_state');
+  late final _wire_get_vault_state =
+      _wire_get_vault_statePtr.asFunction<void Function(int)>();
 
   void wire_fetch_async(
     int port_,
