@@ -2,15 +2,12 @@
 [chain]
 chain_id = 42161
 rpc_urls = [
-    "https://endpoints.omniatech.io/v1/arbitrum/one/public",
-    "https://arb-mainnet-public.unifra.io",
-    "https://arb1.arbitrum.io/rpc"
-
+  "https://arbitrum-one.position.exchange"
 ]
 multicall_address = "0x8DaE0E724d1D6CB74Bb869bF7E2a0129613A6BE6"
 
 [contract_address]
-vault = "0x79061aE2B6bd18c2Eb421Da730d3ad47C303A65D"
+vault = "0x374A9b2895283d0185E01C0F19F6Bf954BeB26D4"
 plp_manager = "0xd88f56DE1C624e1d44C08C9302aF287d6a6a8222"
 plp_token = "0xE6102D09eC5ed79E429f94E5b4cb482E96157290"
 
