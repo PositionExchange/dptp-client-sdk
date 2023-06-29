@@ -2,7 +2,7 @@
 [chain]
 chain_id = 421613
 rpc_urls = [
-    "https://snowy-dimensional-wave.arbitrum-goerli.quiknode.pro/5fb1a4cbaec64e964facf89b037dabd44bd73b27/",
+  "https://arbitrum-goerli.position.exchange"
 ]
 multicall_address = "0x1fb9057314f4460a673014F2AF84f3962381E453"
 
