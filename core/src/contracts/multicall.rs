@@ -57,9 +57,9 @@ impl ChainMulticallTrait for Chain {
         let addr: Address = address.parse().expect("Invalid account");
 
         let provider = Provider::<Http>::try_from(self.rpc_urls[self.random_rpc()].clone()).expect("Invalid provider");
-        let block_number = Some(BlockId::Number(BlockNumber::Number(provider.get_block_number().await.unwrap())));
 
-        let balance = provider.get_balance(addr, block_number).await.expect("Failed to get balance");
+
+        let balance = provider.get_balance(addr, None).await.expect("Failed to get balance");
         Ok(balance)
 
     }
