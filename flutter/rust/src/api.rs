@@ -77,7 +77,7 @@ impl FlutterRouter {
     }
 
     pub fn get_price_plp(&mut self, is_buy: bool) -> U256 {
-        U256::from(&self.router.vault.state.get_plp_price(is_buy))
+        self.router.vault.state.get_plp_price(is_buy).clone()
     }
 
     pub fn get_vault_state(&mut self) -> VaultState {
@@ -161,22 +161,17 @@ mod tests {
     fn it_works() {
         // 1. load config
         fetch_async(
-            42161,
+            421613,
             "0xaC7c1a2fFb8b3f3bEa3e6aB4bC8b1A2Ff4Bb4Aa4".to_string(),
         );
-        // initialize(421613);
-        // set_account("0xaC7c1a2fFb8b3f3bEa3e6aB4bC8b1A2Ff4Bb4Aa4".to_string());
-        // fetch_data();
-        // init_vault_state();
-        // calculate_price_plp();
-        // let tokens = load_tokens();
+        let tokens = load_tokens();
         // let detail = get_swap_details(
         //     "0x38193a1c61b2b44446289265580f73746f5bb5ae".to_owned(),
         //     "0xa8cc0c527a271c7d196f12c23a65dbfb58c033f5".to_owned(),
         //     "10000000000".to_owned(),
         // );
-        let state = get_price_plp(true);
-        println!("Loaded tokens: {:?}", state);
+        // let state = get_price_plp(true);
+        println!("Loaded tokens: {:?}", tokens);
         // println!("token detail: {:?}", detail);
         // assert_eq!(tokens.len(), 3);
         // assert_eq!(tokens[0].symbol, "USDT");

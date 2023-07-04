@@ -7,7 +7,7 @@ use ethers::{
 use std::sync::Arc;
 use crate::{config::Chain, log};
 use async_trait::async_trait;
-use ethers::prelude::{contracts, Middleware};
+use ethers::prelude::{contract, Middleware};
 use ethers::types::{BlockId, BlockNumber};
 use rand::Rng;
 use serde::de::Unexpected::Option;

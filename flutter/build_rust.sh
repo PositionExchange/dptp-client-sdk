@@ -1,4 +1,4 @@
-rm -R lib/ios/dptp_sdk.xcodeproj/
+rm -R lib/ios/dptp_sdk.xcodeproj
 
 cd rust || exit
 
@@ -21,6 +21,6 @@ cd ../ &&
 
 # Build iOS library
 cargo xcode &&
-mv rust/dptp_sdk.xcodeproj/ lib/ios
+mv rust/dptp_sdk.xcodeproj lib/ios
 
 wait

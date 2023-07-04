@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:dptp_client_sdk/dptp_client_sdk_ffi.dart';
+import 'package:flutter/material.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,13 +18,13 @@ class _MyAppState extends State<MyApp> {
     // TODO: implement initState
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await sdk.initialize(chainId: 97);
-      await sdk.setAccount(
+      await sdk.fetchAsync(
+          chainId: 421613,
           account: '0x62a9B1AB58c3B59eF17923792122985d210A94A1');
-      await sdk.fetchData();
       final token = await sdk.loadTokens();
-      final router = await sdk.getRouter();
-      print('token');
+      final plpPriceBuy = await sdk.getPricePlp(isBuy: true);
+      final plpPriceSell = await sdk.getPricePlp(isBuy: false);
+      print('token $token');
     });
   }
 
