@@ -1,9 +1,9 @@
 [package]
 #name = "futurx_sdk"
-#version = "0.4.507"
+#version = "0.4.509"
 
- name = "futurx_sdk_node"
- version = "0.5.302"
+name = "futurx_sdk_node"
+version = "0.5.304"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
