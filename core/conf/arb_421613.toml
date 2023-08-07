@@ -28,7 +28,7 @@ name = "futurx_gateway"
 
 [[tokens]]
 chain_id = 421613
-address = "0x38193a1c61B2B44446289265580F73746F5BB5AE"
+address = "0xf3ABe22eE1D9CdF2aab205995608bBA78783CCe9"
 symbol = "USDT"
 decimals = 6
 name = "USD-Tether"
@@ -40,7 +40,7 @@ logo_url = "https://tokens.pancakeswap.finance/images/0x55d398326f99059fF7754852
 
 [[tokens]]
 chain_id = 421613
-address = "0x42C2Bd247fbe4804C52999f33105Ad705Dee3bC5"
+address = "0xCD4A23DDaAfFDE52863Ca328DE2c8902E0459A14"
 symbol = "USDC"
 decimals = 6
 name = "USD-Coin"
@@ -52,7 +52,7 @@ logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png"
 
 [[tokens]]
 chain_id = 421613
-address = "0xA8cc0c527a271c7D196f12c23a65DbFB58C033F5"
+address = "0x450DD7F1d2C4228ea7F2Ab18bA2dd465d1B9e0bE"
 symbol = "BTC"
 decimals = 8
 name = "Bitcoin"
@@ -64,7 +64,7 @@ logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/1.png"
 
 [[tokens]]
 chain_id = 421613
-address = "0xeB38ba492650c7ea62047E0e879C6a5F6c3e9D8C"
+address = "0x6AEC7c27FC87C540a5031C752c58D87486043334"
 symbol = "DAI"
 decimals = 18
 name = "DAI Token"
@@ -102,7 +102,7 @@ is_native_token = true
 
 [[tokens]]
 chain_id = 421613
-address = "0x74c0348CC6027b0c60C27c2c6b8Cf32C5510b569"
+address = "0x2787741b0E66FED4749128bC2DF38778e49Ca92a"
 symbol = "LINK"
 decimals = 18
 name = "Chainlink"
