@@ -87,17 +87,17 @@ logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/4943.png"
 #logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/4687.png"
 
 
-[[tokens]]
-chain_id = 421613
-address = "0x471385598B0Bdb63C89082F4166C0577C6C0263a"
-symbol = "ETH"
-decimals = 18
-name = "Ethereum"
-is_whitlisted = true
-is_tradeable = true
-quote_precision = 8
-logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png"
-is_native_token = true
+#[[tokens]]
+#chain_id = 421613
+#address = "0x471385598B0Bdb63C89082F4166C0577C6C0263a"
+#symbol = "ETH"
+#decimals = 18
+#name = "Ethereum"
+#is_whitlisted = true
+#is_tradeable = true
+#quote_precision = 8
+#logo_url = "https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png"
+#is_native_token = true
 
 
 [[tokens]]
